@@ -1,8 +1,47 @@
 *~
+obj
+
+aq_pub
 
 # Object file
 *.o
 *.a
 
+
 # Ada Library Information
 *.ali
+b~*.ads
+b~*.adb
+
+# simple components
+test_approximations
+test_association
+test_b_trees
+test_blackboard
+test_blackboard_performance
+test_block_streams
+test_blocking_files
+test_cubic_spline
+test_dining_philosophers
+test_fifo
+test_generic_indefinite_sets
+test_generic_maps
+test_generic_sets
+test_graphs
+test_handles
+test_ieee_754
+test_linked_lists
+test_linked_lists_scheduler_test
+test_parser_stream_io
+test_persistent_memory_pool
+test_persistent_storage
+test_sequencer
+test_single_file_persistence
+test_stack
+test_storage_streams
+test_string_streams
+test_synchronization_events
+test_transactional_blocking_files
+test_utf8_tables
+test_mqtt_client
+test_mqtt_server

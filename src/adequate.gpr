@@ -1,0 +1,13 @@
+with "../Simple_Components/components.gpr";
+with "../Simple_Components/components-connections_server.gpr";
+with "../Simple_Components/components-connections_server-mqtt.gpr";
+
+project Adequate is
+   
+   for Object_Dir use "obj";
+   for Exec_Dir   use ".";
+   for Source_Dirs use (".");
+   
+   for Main use ("aq_pub.adb");
+
+end Adequate;
