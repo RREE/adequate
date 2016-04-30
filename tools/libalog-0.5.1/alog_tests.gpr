@@ -1,0 +1,73 @@
+--
+--  Copyright (c) 2009-2014,
+--  Reto Buerki, Adrian-Ken Rueegsegger
+--
+--  This file is part of Alog.
+--
+--  Alog is free software; you can redistribute it and/or modify
+--  it under the terms of the GNU Lesser General Public License as published
+--  by the Free Software Foundation; either version 2.1 of the License, or
+--  (at your option) any later version.
+--
+--  Alog is distributed in the hope that it will be useful,
+--  but WITHOUT ANY WARRANTY; without even the implied warranty of
+--  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--  GNU Lesser General Public License for more details.
+--
+--  You should have received a copy of the GNU Lesser General Public License
+--  along with Alog; if not, write to the Free Software
+--  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+--  MA  02110-1301  USA
+--
+
+with "ahven";
+with "alog_common";
+
+project Alog_Tests is
+
+   type Build_Type is ("tests", "coverage", "profiling");
+   Build : Build_Type := external ("ALOG_BUILD", "tests");
+
+   for Languages use Alog_Common.Languages;
+   for Source_Dirs use ("src", "tests");
+
+   Compiler_Switches := Alog_Common.Compiler_Switches;
+   Linker_Switches   := ();
+
+   case Build is
+      when "tests" =>
+         for Main use ("test_runner.adb");
+         for Object_Dir use "obj";
+
+      when "coverage" =>
+         for Main use ("test_runner.adb");
+         for Object_Dir use "obj/cov";
+         Compiler_Switches := Compiler_Switches
+           & ("-ftest-coverage", "-fprofile-arcs");
+         Linker_Switches   := Linker_Switches
+           & ("-fprofile-generate");
+
+      when "profiling" =>
+         for Main use ("profiler.adb");
+         for Object_Dir use "obj";
+
+   end case;
+
+   package Compiler is
+      for Default_Switches ("ada") use Compiler_Switches;
+   end Compiler;
+
+   package Linker is
+      for Default_Switches ("ada") use Linker_Switches;
+   end Linker;
+
+   package Builder is
+      for Default_Switches ("ada") use Alog_Common.Builder_Switches;
+   end Builder;
+
+   package Binder is
+      for Default_Switches ("ada") use Alog_Common.Binder_Switches;
+   end Binder;
+
+end Alog_Tests;
+

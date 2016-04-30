@@ -1,4 +1,9 @@
 with Ada.Text_IO;
+with Alog;                         use Alog;
+with Alog.Logger;
+with Alog.Policy_DB;
+with Log;                          use Log;
+
 with Ada.Exceptions;               use Ada.Exceptions;
 with GNAT.Sockets.MQTT;            use GNAT.Sockets.MQTT;
 with GNAT.Sockets.MQTT.Server;     use GNAT.Sockets.MQTT.Server;
@@ -6,14 +11,17 @@ with GNAT.Sockets.Server;          use GNAT.Sockets.Server;
 with GNAT.Sockets.Server.Handles;  use GNAT.Sockets.Server.Handles;
 
 with Opt_Pub;                      use Opt_Pub;
-with MQTT_Clients;                 use Mqtt_Clients;
+with MQTT_Clients;                 use MQTT_Clients;
 
 procedure Aq_Pub is
+
    Factory   : aliased Connections_Factory;
    Server    : aliased Connections_Server (Factory'Access, 0);
    Reference : Handle;
 
 begin
+   Alog.Policy_DB.Set_Default_Loglevel (Level => Debug);
+
    Opt_Pub.Set_Options;
 
    Trace_On (Factory  => Factory,
@@ -27,53 +35,26 @@ begin
    declare
       Client : MQTT_Client renames MQTT_Client (Ptr (Reference).all);
 
-      procedure Test_1 is
-      begin
-         Set_Overlapped_Size (Client, 4); -- One response packet
-         Connect (Server,
-                  Client'Unchecked_Access,
-                  Opt_Pub.Server_Name_Text.all,
-                  --MQTT_Port
-                  GNAT.Sockets.Port_Type (Port));
-         while not Is_Connected (Client) loop -- Busy waiting
-            delay 0.1;
-         end loop;
-         Ada.Text_IO.Put_Line ("MQTT client connected to " &
-                                 Opt_Pub.Server_Name_Text.all);
-         Send_Connect (Client, "aq_pub");
-
-         Send_Subscribe (Client,
-                         12,
-                         "$SYS/broker/uptime" / "$SYS/broker/load/#",
-                         (At_Least_Once, Exactly_Once)
-                        );
-         delay 1.0;
-         Send_Ping (Client);
-         delay 5.0;
-         Send_Unsubscribe (Client, 13, "$SYS/broker/uptime" / "??");
-         delay 1.0;
-         Send_Disconnect (Client);
-         delay 1.0;
-      end Test_1;
-
    begin
-      Ada.Text_Io.Put_Line ("aq_pub MQTT client started");
+      L.Log_Message (Debug, "aq_pub MQTT client started");
       -- Test_1;
       Set_Overlapped_Size (Client, 4); -- One response packet
       Connect (Server,
                Client'Unchecked_Access,
-               Opt_Pub.Server_Name_Text.all,
-               --MQTT_Port
+               Server_Name_Text.all,
                GNAT.Sockets.Port_Type (Port));
-      while not Is_Connected (Client) loop -- Busy waiting
-         delay 0.1;
+      while not Is_Connected (Client) loop -- busy waiting
+         delay 0.01;
       end loop;
-      Ada.Text_IO.Put_Line ("aq_pub MQTT client connected to " &
-                              Opt_Pub.Server_Name_Text.all);
+      L.Log_message (Debug, "aq_pub MQTT client connected to " &
+                              Server_Name_Text.all);
       Send_Connect (Client, "aq_pub");
 
-      Send_Publish (Client, Opt_Pub.Topic_Text.all, Opt_Pub.Message_Text.all, At_Most_Once);
-
+      Send_Publish (Client,
+                    Topic   => Opt_Pub.Topic_Text.all,
+                    Message => Opt_Pub.Message_Text.all,
+                    Packet  => (Exactly_Once, 14));
+      delay 0.1;
       Send_Disconnect (Client);
    end;
 

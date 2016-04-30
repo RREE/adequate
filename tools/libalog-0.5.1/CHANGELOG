@@ -1,0 +1,64 @@
+Alog Changelog
+==============
+
+Version 0.5
+-----------
+.Additions and changes
+- Drop PostgreSQL, SMTP and XMPP facilities
+- Simplify build logic and switch to gprbuild
+- Remove Alog.Version package
+
+.Bug fixes
+- Make policy database safe for concurrent access
+
+Version 0.4.1
+-------------
+.Additions and changes
+- Minor corrections to README.
+- Drop major version symlink.
+- Add revision number to library version.
+
+Version 0.4
+-----------
+.Additions and changes
+- Use latest libaws jabber API.
+- Remove policy handling from loggers.
+- Change default loglevel to Info.
+- Rewrite tasked logger exception handling.
+- Cleanup of syslog facility.
+- Auto-generate documentation.
+
+Version 0.3
+-----------
+.Additions and changes
+- Architecture cleanup.
+- Tasked and Active loggers.
+- Loglevel policies (source and destination filtering).
+- Coverage report generation.
+- Profiling support.
+- Provide code examples.
+
+.Bug fixes
+- Make stdout redirection work with FD facility.
+
+Version 0.2
+-----------
+.Additions and changes
+- PostgreSQL-based facility implemented.
+- Introduce two build types: base and full.
+- Transformations infrastructure implemented.
+
+.Bug fixes
+- Compile-fixes for GNAT 4.3.
+
+Version 0.1
+-----------
+.Additions and changes
+- File_Descriptor facility implemented.
+- Syslog facility implemented.
+- SMTP facility implemented.
+- XMPP facility implemented.
+- Basic logger support.
+
+.Bug fixes
+- none.

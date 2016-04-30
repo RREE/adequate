@@ -1,0 +1,14 @@
+# This is a comment (ignored)
+
+  # Displaced comment (ignored)
+
+# Next line is whitespaces only (ignored)
+                 
+
+# Default loglevel
+Default = Info
+
+# Source-specific loglevels
+Foo.* = Debug
+Foo.Bar = Alert
+  Foo.Foo   =  Notice  

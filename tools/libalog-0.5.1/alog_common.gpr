@@ -1,0 +1,47 @@
+--
+--  Copyright (c) 2009-2014,
+--  Reto Buerki, Adrian-Ken Rueegsegger
+--
+--  This file is part of Alog.
+--
+--  Alog is free software; you can redistribute it and/or modify
+--  it under the terms of the GNU Lesser General Public License as published
+--  by the Free Software Foundation; either version 2.1 of the License, or
+--  (at your option) any later version.
+--
+--  Alog is distributed in the hope that it will be useful,
+--  but WITHOUT ANY WARRANTY; without even the implied warranty of
+--  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--  GNU Lesser General Public License for more details.
+--
+--  You should have received a copy of the GNU Lesser General Public License
+--  along with Alog; if not, write to the Free Software
+--  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+--  MA  02110-1301  USA
+--
+
+project Alog_Common is
+
+   for Source_Dirs use ();
+
+   Version := external ("ALOG_VERSION", "0.1");
+
+   type Lib_Type is ("static", "dynamic");
+   Libtype : Lib_Type := external ("LIBRARY_KIND", "static");
+
+   Languages := ("Ada", "C");
+
+   Compiler_Switches := ("-gnatygAdISuxo",
+                         "-gnatVa",
+                         "-gnat05",
+                         "-gnatwal",
+                         "-gnatf",
+                         "-fstack-check",
+                         "-gnato");
+
+   Builder_Switches := ("-g");
+
+   Binder_Switches := ("-E");
+
+end Alog_Common;
+

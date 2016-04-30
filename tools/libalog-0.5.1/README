@@ -1,0 +1,73 @@
+Alog README
+===========
+
+Alog is a stackable logging framework for Ada. It aims to be straight forward to
+use and is easily extendable. It provides support for various logger types, log
+facilities, loglevel policies and message transformations.
+
+
+Prerequisites
+-------------
+Alog is written in Ada so you need to have an Ada Compiler such as GNAT
+installed to build Alog. The library includes facilities to log to files and
+syslog.
+
+
+Download
+--------
+
+Release version
+~~~~~~~~~~~~~~~
+The current release version of alog is available at
+http://www.codelabs.ch/download/.
+
+Verify a Release
+~~~~~~~~~~~~~~~~
+To verify the integrity and authenticity of the distribution tarball, import
+the key http://www.codelabs.ch/keys/0xBB793815pub.asc and type the following
+command:
+
+  $ gpg --verify libalog-{version}.tar.bz2.sig
+
+The key fingerprint of the public key ('0xBB793815') is:
+
+  Key fingerprint = A2FB FF56 83FB 67D8 017B  C50C F8C5 F8B5 BB79 3815
+
+Development version
+~~~~~~~~~~~~~~~~~~~
+The current development version of alog is available through its git repository:
+
+  $ git clone http://git.codelabs.ch/git/alog.git
+
+A browsable version of the repository is also available here:
+http://git.codelabs.ch/?p=alog.git
+
+
+Installation
+------------
+The Alog library has no special dependencies. To run the testcases, you need to
+have the Ahven Unit Test-Framework installed:
+
+* Ahven (Test-Framework):
+  http://ahven.stronglytyped.org/
+
+The building and installation process of Alog is simple. Just type in the
+following commands. You must be root to install the library system wide.
+
+  $ tar -xzf libalog-{version}.tar.bz2
+  $ cd libalog-{version}
+  $ make
+  $ make PREFIX=/usr/local install
+
+This will compile and install the Alog library. If no `PREFIX` is specified,
+`$(HOME)/libraries` is used as installation directory.
+
+
+Tests
+-----
+After compiling and linking Alog, you can test if everything works as
+expected by typing the following command:
+
+  $ make tests
+
+You should then see `PASS` behind each of the tests.

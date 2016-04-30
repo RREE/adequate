@@ -1,0 +1,132 @@
+Alog
+====
+
+* link:README.html[README]
+
+* link:CHANGELOG.html[CHANGELOG]
+
+* http://www.codelabs.ch/download/[Download]
+
+Overview
+--------
+Alog is a stackable logging framework for Ada. It aims to be straight forward to
+use and easily extendable. It provides support for various logger types, log
+facilities, loglevel policies and message transformations.
+
+image:alog-arch.png[Framework Architecture]
+
+Logger
+~~~~~~
+Logger instances are used to manage an arbitrary number of log facilities and
+message transformations. Various logger types exist which are suitable for
+different scenarios:
+
+Logger::
+  This is the basic Alog logger type. This logger is easy to use and good enough
+  for most situations. However, it does not provide thread safety.
+
+Tasked Logger::
+  The Alog tasked logger encapsulates a basic logger instance inside a server
+  task to provide safe concurrent logging. Since calls to this logger are
+  potentially blocking operations, it cannot be used from within a protected
+  action.
+
+Active Logger::
+  The Alog active logger provides task safe concurrent logging from any context.
+
+Facility
+~~~~~~~~
+Another basic entity in the Alog framework is called a Facility. Facilities
+are log destinations and used to log messages to different backends, e.g. a
+file or a database. Currently, the framework provides the following log
+facilities:
+
+File_Descriptor::
+  Writes log messages to file or console.
+
+Syslog::
+  Writes log messages to syslog.
+
+Transformation
+~~~~~~~~~~~~~~
+Transformations are used to modify a log message before it is passed on to a
+facility. The following message transformations are available:
+
+Casing (toUpper / toLower)::
+  Convert a log message to upper/lower case.
+
+Policy
+~~~~~~
+Alog supports source and destination filtering by means of loglevel policies.
+Refer to the example section for information on how to setup such policies.
+
+
+Examples
+--------
+The examples presented in this section will give an introduction on how to use
+the Alog framework in your own project.
+
+Logger
+~~~~~~
+The following example uses a basic logger instance to log messages to standard
+output. Furthermore, a file based facility is attached which writes log messages
+to a file.
+
+[source,ada]
+---------------------------------------------------------------------
+include::../examples/logger_example1.adb[]
+---------------------------------------------------------------------
+
+The logger will take care about cleaning up all the attached facilities when
+it goes out of scope. However, you can do this explicitly by calling
+`Logger.Clear` as well.
+
+Facility
+~~~~~~~~
+The following code sets up a file descriptor based facility to log messages to
+a file. If the file already exists, it will be overwritten.
+
+[source,ada]
+---------------------------------------------------------------------
+include::../examples/facility_example1.adb[]
+---------------------------------------------------------------------
+
+Policy
+~~~~~~
+The first policy example uses the policy database of Alog to specify source
+specific loglevels. It shows how logging policies can be used to filter
+log messages depending on their source.
+
+[source,ada]
+---------------------------------------------------------------------
+include::../examples/policy_example1.adb[]
+---------------------------------------------------------------------
+
+The second policy example demonstrates the usage of destination filtering. Only
+log messages with loglevel `Error` or higher are written to the application
+error logfile. It shows how logging policies can be used to filter log messages
+depending on the destination (facility name).
+
+[source,ada]
+---------------------------------------------------------------------
+include::../examples/policy_example2.adb[]
+---------------------------------------------------------------------
+
+
+Browse the source
+-----------------
+- You can browse the Alog source code with gitweb
+http://git.codelabs.ch/?p=alog.git[here].
+
+
+Licence
+-------
+--------------------------------------------------------------------------------
+Copyright (C) 2008-2014 Reto Buerki
+Copyright (C) 2008-2014 Adrian-Ken Rueegsegger
+
+Alog is free software; you can redistribute it and/or modify it under the terms
+of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 2.1 of the License, or (at your option) any later
+version.
+--------------------------------------------------------------------------------

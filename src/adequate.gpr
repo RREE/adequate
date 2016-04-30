@@ -1,6 +1,7 @@
-with "../Simple_Components/components.gpr";
-with "../Simple_Components/components-connections_server.gpr";
-with "../Simple_Components/components-connections_server-mqtt.gpr";
+with "../tools/components/components.gpr";
+with "../tools/components/components-connections_server.gpr";
+with "../tools/components/components-connections_server-mqtt.gpr";
+with "../tools/libalog/alog.gpr";
 
 project Adequate is
    
