@@ -1,11 +1,9 @@
 --                                                                    --
---  package Test_MQTT_Clients       Copyright (c)  Dmitry A. Kazakov  --
+--  package Test_MQTT_Servers       Copyright (c)  Dmitry A. Kazakov  --
 --  Interface                                      Luebeck            --
 --                                                 Spring, 2016       --
 --                                                                    --
 --                                Last revision :  18:59 21 Mar 2016  --
---                                                                    --
---  edited for Adequate by Rolf Ebert                                 --
 --                                                                    --
 --  This  library  is  free software; you can redistribute it and/or  --
 --  modify it under the terms of the GNU General Public  License  as  --
@@ -27,30 +25,38 @@
 --  executable file might be covered by the GNU Public License.       --
 --____________________________________________________________________--
 
-with Ada.Streams;        use Ada.Streams;
-with GNAT.Sockets.MQTT;  use GNAT.Sockets.MQTT;
+with Ada.Streams;               use Ada.Streams;
+with Ada.Calendar;              use Ada.Calendar;
+with GNAT.Sockets;              use GNAT.Sockets;
+with GNAT.Sockets.MQTT;         use GNAT.Sockets.MQTT;
+with GNAT.Sockets.MQTT.Server;  use GNAT.Sockets.MQTT.Server;
+with GNAT.Sockets.Server;       use GNAT.Sockets.Server;
 
-package MQTT_Clients is
+package MQTT_Broker is
 
-   type MQTT_Client is new MQTT_Pier with private;
+   Aq_Broker_Version : constant String := "0.0.1";
 
-   procedure On_Connect_Accepted (Pier            : in out MQTT_Client;
-                                  Session_Present : Boolean);
-   procedure On_Connect_Rejected (Pier     : in out MQTT_Client;
-                                  Response : Connect_Response);
-   procedure On_Ping_Response (Pier : in out MQTT_Client);
-   procedure On_Publish (Pier      : in out MQTT_Client;
-                         Topic     : String;
-                         Message   : Stream_Element_Array;
-                         Packet    : Packet_Identification;
-                         Duplicate : Boolean;
-                         Retain    : Boolean);
-   procedure On_Subscribe_Acknowledgement
-     (Pier   : in out MQTT_Client;
-      Packet : Packet_Identifier;
-      Codes  : Return_Code_List);
+
+   type Broker_Factory is new Connections_Factory with record
+      Server : aliased MQTT_Server;
+   end record;
+   function Create (Factory  : access Broker_Factory;
+                    Listener : access Connections_Server'Class;
+                    From     : Sock_Addr_Type)
+                   return Connection_Ptr;
+
+   type Test_Server is new MQTT_Connection with private;
+
+   procedure Start_Broker;
+
+   procedure Publish_Broker_Internals;
+
+   Factory : aliased Broker_Factory;
+   Server  : Connections_Server (Factory'Access, MQTT_Port);
+
+   Start_Up_Time : Ada.Calendar.Time;
 
 private
-   type MQTT_Client is new MQTT_Pier with null record;
+   type Test_Server is new MQTT_Connection with null record;
 
-end MQTT_Clients;
+end MQTT_Broker;

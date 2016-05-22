@@ -1768,7 +1768,7 @@ package body GNAT.Sockets.MQTT is
                 Retain    : Boolean := False
              )  is
       Length : Stream_Element_Count :=
-               4 + Topic'Length + Message'Length;
+               2 + Topic'Length + Message'Length;
    begin
       if Packet.QoS /= At_Most_Once then
          Length := Length + 2;
@@ -1800,7 +1800,7 @@ package body GNAT.Sockets.MQTT is
          if Packet.QoS /= At_Most_Once then
             Put (Data, Pointer, Unsigned_16 (Packet.ID));
          end if;
-         Put_String (Data, Pointer, Message);
+         Data (Pointer..Pointer + Message'Length - 1) := Message;
          Send (MQTT_Pier'Class (Pier), Data);
       end;
    end Send_Publish;

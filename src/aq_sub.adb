@@ -1,4 +1,4 @@
-with Ada.Text_IO;
+
 with Alog;                         use Alog;
 with Alog.Logger;
 with Alog.Policy_DB;
@@ -13,7 +13,7 @@ with GNAT.Sockets.Server.Handles;  use GNAT.Sockets.Server.Handles;
 with Opt;                          use Opt;
 with MQTT_Clients;                 use MQTT_Clients;
 
-procedure Aq_Pub is
+procedure Aq_Sub is
 
    Factory   : aliased Connections_Factory;
    Server    : aliased Connections_Server (Factory'Access, 0);
@@ -35,15 +35,19 @@ begin
                          Input_Size           => 80,
                          Output_Size          => 80,
                          Max_Subscribe_Topics => 20));
+
    declare
       Client : MQTT_Client renames MQTT_Client (Ptr (Reference).all);
-      Pub_Id : Packet_Identification (QoS);
+      Sub_Id : Packet_Identification (QoS);
+      Sub_Nr : Packet_Identifier := 24;
    begin
       L.Log_Message (Debug, "MQTT client '" & Client_Name.all & "' started");
       if QoS > At_Least_Once then
-         Pub_Id.Id := 14; -- arbitrary
+         Sub_Id.Id := 24; -- arbitrary
       end if;
-      Set_Overlapped_Size (Client, 4); -- One response packet
+      Set_Overlapped_Size (Client, 4); -- One response packet (4
+                                       -- bytes) is queued for send
+                                       -- without blockking receiving
       Connect (Server,
                Client'Unchecked_Access,
                Server_Name.all,
@@ -55,16 +59,16 @@ begin
                        "' connected to '" & Server_Name.all & "'");
       Send_Connect (Client, Client_Name.all);
 
-      Send_Publish (Client,
-                    Topic   => Opt.Topic_Text.all,
-                    Message => Opt.Message_Text.all,
-                    Packet  => Pub_Id);
-      delay 0.1;
-      Send_Disconnect (Client);
+      Send_Subscribe (Client,
+                      Sub_Nr,
+                      Opt.Topic_Text.all,
+                      QoS);
+
+      loop null; end loop;
    end;
 
 exception
-when Error : others =>
-   Ada.Text_IO.Put_Line ("Error: " & Exception_Information (Error));
+when E : others =>
+   L.Log_Message (Error, "Error: " & Exception_Information (E));
 
-end Aq_Pub;
+end Aq_Sub;

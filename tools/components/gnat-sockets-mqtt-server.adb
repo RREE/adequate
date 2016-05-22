@@ -1283,7 +1283,7 @@ package body GNAT.Sockets.MQTT.Server is
       begin
          case Policy is
             when Transient =>
-               null;
+               Changed := True;
             when Retained =>
                Replace
                (  Server.Retained.Set,

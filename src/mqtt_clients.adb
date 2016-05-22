@@ -25,9 +25,12 @@
 --  executable file might be covered by the GNU Public License.       --
 --____________________________________________________________________--
 
-with Ada.Text_IO;            use Ada.Text_IO;
-with GNAT.Sockets.Server;    use GNAT.Sockets.Server;
-with Strings_Edit.Integers;  use Strings_Edit.Integers;
+-- with Ada.Text_IO;            use Ada.Text_IO;
+with Alog;                         use Alog;
+with Alog.Logger;                  use Alog.Logger;
+with Log;                          use Log;
+with GNAT.Sockets.Server;          use GNAT.Sockets.Server;
+with Strings_Edit.Integers;        use Strings_Edit.Integers;
 
 package body MQTT_Clients is
 
@@ -35,7 +38,7 @@ package body MQTT_Clients is
                                   Session_Present : Boolean)
    is
    begin
-      Put_Line ("Connect accepted");
+      L.Log_Message (Info, "MQTT connect accepted");
    end On_Connect_Accepted;
 
 
@@ -43,13 +46,13 @@ package body MQTT_Clients is
                                   Response : Connect_Response)
    is
    begin
-      Put_Line ("Connect rejected " & Image (Response));
+      L.Log_Message (Info, "Connect rejected " & Image (Response));
    end On_Connect_Rejected;
 
 
    procedure On_Ping_Response (Pier : in out MQTT_Client) is
    begin
-      Put_Line ("Ping response");
+      L.Log_Message (Info, "Ping response");
    end On_Ping_Response;
 
 
@@ -61,7 +64,7 @@ package body MQTT_Clients is
                          Retain    : Boolean)
    is
    begin
-      Put_Line ("Message " & Topic & "=" & Image (Message));
+      L.Log_Message (Info, "Message " & Topic & " = " & Image (Message));
       On_Publish (MQTT_Pier (Pier),
                   Topic,
                   Message,
@@ -70,23 +73,26 @@ package body MQTT_Clients is
                   Retain);
    end On_Publish;
 
+
    procedure On_Subscribe_Acknowledgement (Pier   : in out MQTT_Client;
                                            Packet : Packet_Identifier;
                                            Codes  : Return_Code_List)
    is
+
    begin
-      Put ("Subscribed " & Image (Integer (Packet)) & ":");
-      for Index in Codes'Range loop
-         if Index /= Codes'First then
-            Put (", ");
-         end if;
-         if Codes (Index).Success then
-            Put (QoS_Level'Image (Codes (Index).QoS));
-         else
-            Put ("Failed");
-         end if;
-      end loop;
-      New_Line;
+      L.Log_Message (Info, "Subscribed " & Image (Integer (Packet)) & ":"
+                       & QoS_Level'Image (Codes (Codes'First).QoS));
+      --  for Index in Codes'Range loop
+      --     if Index /= Codes'First then
+      --        Put (", ");
+      --     end if;
+      --     if Codes (Index).Success then
+      --        Put (QoS_Level'Image (Codes (Index).QoS));
+      --     else
+      --        Put ("Failed");
+      --     end if;
+      --  end loop;
+      --  New_Line;
    end On_Subscribe_Acknowledgement;
 
 end MQTT_Clients;

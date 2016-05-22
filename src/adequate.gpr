@@ -9,6 +9,6 @@ project Adequate is
    for Exec_Dir   use ".";
    for Source_Dirs use (".");
    
-   for Main use ("aq_pub.adb");
+   for Main use ("aq_pub.adb", "aq_sub.adb", "aq_broker.adb");
 
 end Adequate;

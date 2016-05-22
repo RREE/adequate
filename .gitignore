@@ -2,6 +2,8 @@
 obj
 
 aq_pub
+aq_sub
+aq_broker
 
 # Object file
 *.o
@@ -9,11 +11,16 @@ aq_pub
 
 
 # Ada Library Information
+auto.cgpr
 *.ali
+*.bexch
 b~*.ads
 b~*.adb
+b__*.ads
+b__*.adb
 
 # simple components
+components.orig
 test_approximations
 test_association
 test_b_trees
