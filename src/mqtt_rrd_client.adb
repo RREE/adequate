@@ -1,5 +1,5 @@
 --                                                                    --
---  package Test_MQTT_Clients       Copyright (c)  Dmitry A. Kazakov  --
+--  package MQTT_Clients            Copyright (c)  Dmitry A. Kazakov  --
 --  Implementation                                 Luebeck            --
 --                                                 Spring, 2016       --
 --                                                                    --
@@ -25,14 +25,18 @@
 --  executable file might be covered by the GNU Public License.       --
 --____________________________________________________________________--
 
--- with Ada.Text_IO;            use Ada.Text_IO;
+-- 2016-12: R. Ebert, use alog instead of direct Text_IO
+
+with Ada.Exceptions;
 with Alog;                         use Alog;
 with Alog.Logger;                  use Alog.Logger;
-with Log;                          use Log;
+with Logs;                         use Logs;
+with GNAT.Sockets;                 use GNAT.Sockets;
 with GNAT.Sockets.Server;          use GNAT.Sockets.Server;
 with Strings_Edit.Integers;        use Strings_Edit.Integers;
+with Rrd;
 
-package body MQTT_Clients is
+package body MQTT_Rrd_Client is
 
    procedure On_Connect_Accepted (Pier            : in out MQTT_Client;
                                   Session_Present : Boolean)
@@ -46,14 +50,8 @@ package body MQTT_Clients is
                                   Response : Connect_Response)
    is
    begin
-      L.Log_Message (Info, "Connect rejected " & Image (Response));
+      L.Log_Message (Warning, "Connect rejected " & Image (Response));
    end On_Connect_Rejected;
-
-
-   procedure On_Ping_Response (Pier : in out MQTT_Client) is
-   begin
-      L.Log_Message (Info, "Ping response");
-   end On_Ping_Response;
 
 
    procedure On_Publish (Pier      : in out MQTT_Client;
@@ -63,36 +61,46 @@ package body MQTT_Clients is
                          Duplicate : Boolean;
                          Retain    : Boolean)
    is
+      Address  : Sock_Addr_Type;
+      Socket   : Socket_Type;
+      Channel  : Stream_Access;
    begin
-      L.Log_Message (Info, "Message " & Topic & " = " & Image (Message));
+      L.Log_Message (Info, "received " & Topic & " = " & Image (Message));
       On_Publish (MQTT_Pier (Pier),
                   Topic,
                   Message,
                   Packet,
                   Duplicate,
                   Retain);
+
+      declare
+         Rrdserv : constant String  := Rrd.Rrdserv (Topic);
+         Rrdport : constant Natural := Rrd.Rrdport (Topic);
+         Rrdfile : constant String  := Rrd.Rrdfile (Topic);
+         Rrdname : constant String  := Rrd.Rrdname (Topic);
+
+         Value_Str : constant String := Image (Message);
+
+         Message : constant String := "update " & Rrdfile & " -t " & Rrdname
+           & " N:" & Value_Str;
+      begin
+         Address.Addr := Addresses (Get_Host_By_Name (Rrdserv));
+         Address.Port := Port_Type (Rrdport);
+         Create_Socket (Socket);
+         Set_Socket_Option (Socket, Socket_Level, (Reuse_Address, True));
+         Connect_Socket (Socket, Address);
+         Channel := Stream(Socket);
+         String'Write (Channel, Message);
+         Close_Socket (Socket);
+
+         L.Log_Message (Info, "sending '" & Message & "' to " & Rrdserv & ':' & Image (Rrdport));
+      end;
+
+   exception
+   when E : others =>
+      L.Log_Message (Error, Ada.Exceptions.Exception_Information (E));
+      raise;
    end On_Publish;
 
 
-   procedure On_Subscribe_Acknowledgement (Pier   : in out MQTT_Client;
-                                           Packet : Packet_Identifier;
-                                           Codes  : Return_Code_List)
-   is
-
-   begin
-      L.Log_Message (Info, "Subscribed " & Image (Integer (Packet)) & ":"
-                       & QoS_Level'Image (Codes (Codes'First).QoS));
-      --  for Index in Codes'Range loop
-      --     if Index /= Codes'First then
-      --        Put (", ");
-      --     end if;
-      --     if Codes (Index).Success then
-      --        Put (QoS_Level'Image (Codes (Index).QoS));
-      --     else
-      --        Put ("Failed");
-      --     end if;
-      --  end loop;
-      --  New_Line;
-   end On_Subscribe_Acknowledgement;
-
-end MQTT_Clients;
+end MQTT_Rrd_Client;

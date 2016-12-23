@@ -5,9 +5,9 @@ with GNAT.Command_Line;            use GNAT.Command_Line;
 with GNAT.Exception_Traces;
 with Ada.Text_IO;                  use Ada.Text_IO;
 with Ada.Exceptions;               use Ada.Exceptions;
-with ALog;                         use ALog;
+with Alog;                         use Alog;
 with Alog.Policy_DB;               use Alog.Policy_DB;
-with Log;                          use Log;
+with Logs;                         use Logs;
 
 package body Opt_Broker is
 
@@ -65,13 +65,14 @@ package body Opt_Broker is
       end case;
 
       L.Log_Message (Debug,
-                     "options set to" & Ascii.LF &
-                       "port        :" & Port_Int'Img & Ascii.LF &
-                       "sys_interval:" & Sys_Interval'Img & Ascii.LF &
-                       "verbosity   :" & Verbosity_Level'Img & Ascii.Lf);
+                     "options set to" & ASCII.LF &
+                       "port        :" & Port_Int'Img & ASCII.LF &
+                       "sys_interval:" & Sys_Interval'Img & ASCII.LF &
+                       "verbosity   :" & Verbosity_Level'Img & ASCII.LF);
    exception
    when Error : GNAT.Command_Line.Exit_From_Command_Line => null;
    when Error : GNAT.Command_Line.Invalid_Switch =>
+      L.Log_Message (Alog.Error, "invalid switch");
       Put_Line (Standard_Error, "invalid switch");
       Display_Help (Cfg);
       Set_Exit_Status (Failure);

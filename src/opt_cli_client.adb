@@ -5,11 +5,11 @@ with GNAT.Command_Line;            use GNAT.Command_Line;
 with GNAT.Exception_Traces;
 with Ada.Text_IO;                  use Ada.Text_IO;
 with Ada.Exceptions;               use Ada.Exceptions;
-with ALog;                         use ALog;
+with Alog;                         use Alog;
 with Alog.Policy_DB;               use Alog.Policy_DB;
-with Log;                          use Log;
+with Logs;                         use Logs;
 
-package body Opt is
+package body Opt_Cli_Client is
 
    Cfg : Command_Line_Configuration;
    Stop : exception;
@@ -126,23 +126,24 @@ package body Opt is
       end case;
 
       L.Log_Message (Debug,
-                     "options set to" & Ascii.LF &
-                       "port     :" & Port_Int'Img & Ascii.LF &
-                       "server   : " & Server_Name.all & Ascii.LF &
-                       "topic    : " & Topic_Text.all & Ascii.LF &
+                     "options set to" & ASCII.LF &
+                       "port     :" & Port_Int'Img & ASCII.LF &
+                       "server   : " & Server_Name.all & ASCII.LF &
+                       "topic    : " & Topic_Text.all & ASCII.LF &
                        (if Prg_Type = Publisher then
-                          "message  : " & Message_Text.all & Ascii.Lf
+                          "message  : " & Message_Text.all & ASCII.LF
                         else "") &
-                       "QoS      : " & Image(QoS) & Ascii.Lf &
-                       "client   : " & Client_Name.all & Ascii.LF &
-                       "verbosity:" & Verbosity_Level'Img & Ascii.Lf);
+                       "QoS      : " & Image(QoS) & ASCII.LF &
+                       "client   : " & Client_Name.all & ASCII.LF &
+                       "verbosity:" & Verbosity_Level'Img & ASCII.LF);
    exception
    when Error : GNAT.Command_Line.Exit_From_Command_Line => null;
    when Error : GNAT.Command_Line.Invalid_Switch =>
-      Put_Line (Standard_Error, "invalid switch");
+      L.Log_Message (Alog.Error, "invalid switch");
+      Ada.Text_IO.Put_Line (Standard_Error, "invalid switch");
       Display_Help (Cfg);
       Set_Exit_Status (Failure);
       raise Stop;
    end Set_Options;
 
-end Opt;
+end Opt_Cli_Client;

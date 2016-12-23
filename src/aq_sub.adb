@@ -1,8 +1,9 @@
 
 with Alog;                         use Alog;
 with Alog.Logger;
+with Alog.Facilities;
 with Alog.Policy_DB;
-with Log;                          use Log;
+with Logs;                         use Logs;
 
 with Ada.Exceptions;               use Ada.Exceptions;
 with GNAT.Sockets.MQTT;            use GNAT.Sockets.MQTT;
@@ -10,8 +11,8 @@ with GNAT.Sockets.MQTT.Server;     use GNAT.Sockets.MQTT.Server;
 with GNAT.Sockets.Server;          use GNAT.Sockets.Server;
 with GNAT.Sockets.Server.Handles;  use GNAT.Sockets.Server.Handles;
 
-with Opt;                          use Opt;
-with MQTT_Clients;                 use MQTT_Clients;
+with Opt_Cli_Client;               use Opt_Cli_Client;
+with MQTT_Cli_Clients;             use MQTT_Cli_Clients;
 
 procedure Aq_Sub is
 
@@ -20,7 +21,7 @@ procedure Aq_Sub is
    Reference : Handle;
 
 begin
-   Opt.Set_Options;
+   Opt_Cli_Client.Set_Options;
 
    if Policy_DB.Get_Default_Loglevel = Debug then
       Trace_On (Factory  => Factory,
@@ -55,13 +56,13 @@ begin
       while not Is_Connected (Client) loop -- busy waiting
          delay 0.01;
       end loop;
-      L.Log_message (Debug, "MQTT client '" & Client_Name.all &
+      L.Log_Message (Debug, "MQTT client '" & Client_Name.all &
                        "' connected to '" & Server_Name.all & "'");
       Send_Connect (Client, Client_Name.all);
 
       Send_Subscribe (Client,
                       Sub_Nr,
-                      Opt.Topic_Text.all,
+                      Opt_Cli_Client.Topic_Text.all,
                       QoS);
 
       loop null; end loop;
@@ -69,6 +70,6 @@ begin
 
 exception
 when E : others =>
-   L.Log_Message (Error, "Error: " & Exception_Information (E));
+   L.Log_Message (Alog.Error, "Error: " & Exception_Information (E));
 
 end Aq_Sub;

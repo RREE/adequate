@@ -20,27 +20,28 @@
 --  MA  02110-1301  USA
 --
 
-with "alog_common";
+project Alog_Common is
 
-project Alog is
+   for Source_Dirs use ();
 
-   for Languages use Alog_Common.Languages;
-   for Source_Dirs use ("src");
-   for Object_Dir use "obj/lib/" & Alog_Common.Libtype;
-   for Library_Name use "alog";
-   for Library_Dir use "lib/" & Alog_Common.Libtype;
-   for Library_Kind use Alog_Common.Libtype;
-   for Library_Version use "libalog.so." & Alog_Common.Version;
-   for Library_Options use External_As_List ("LDFLAGS", " ");
+   Version := external ("ALOG_VERSION", "0.1");
 
-   package Compiler is
-      for Default_Switches ("C") use External_As_List ("CFLAGS", " ");
-      for Default_Switches ("ada") use Alog_Common.Compiler_Switches & "-gnatwe";
-   end Compiler;
+   type Lib_Type is ("static", "dynamic");
+   Libtype : Lib_Type := external ("LIBRARY_KIND", "static");
 
-   package Builder is
-      for Default_Switches ("ada") use Alog_Common.Builder_Switches;
-   end Builder;
+   Languages := ("Ada");
 
-end Alog;
+   Compiler_Switches := ("-gnatygAdISuxo",
+                         "-gnatVa",
+                         "-gnat05",
+                         "-gnatwal",
+                         "-gnatf",
+                         "-fstack-check",
+                         "-gnato");
+
+   Builder_Switches := ("-g");
+
+   Binder_Switches := ("-E");
+
+end Alog_Common;
 

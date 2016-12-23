@@ -4,7 +4,7 @@ with GNAT.Strings;                 use GNAT.Strings;
 with GNAT.Sockets;                 use GNAT.Sockets;
 with GNAT.Sockets.MQTT;            use GNAT.Sockets.MQTT;
 
-package Opt is
+package Opt_Cli_Client is
    type Client_Type is (Publisher, Subscriber);
    Prg_Type : constant Client_Type :=
      (if Command_Name(Command_Name'Last-5..Command_Name'Last) = "aq_pub" then
@@ -24,4 +24,4 @@ package Opt is
    Port : GNAT.Sockets.Port_Type := 1833;
    QoS  : QoS_Level              := At_Most_Once;
    procedure Set_Options;
-end Opt;
+end Opt_Cli_Client;

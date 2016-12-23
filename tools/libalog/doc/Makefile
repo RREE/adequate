@@ -23,13 +23,13 @@ $(DESTDIR)/asciidoc.css: asciidoc.css
 	cp $< $@
 
 $(DESTDIR)/index.html: index page.conf
-	asciidoc $(ASCIIDOC_OPTS) $< > $@
+	TZ=UTC asciidoc $(ASCIIDOC_OPTS) $< > $@
 
 $(DESTDIR)/README.html: ../README
-	asciidoc $(ASCIIDOC_OPTS) $< > $@
+	TZ=UTC asciidoc $(ASCIIDOC_OPTS) $< > $@
 
 $(DESTDIR)/CHANGELOG.html: ../CHANGELOG
-	asciidoc $(ASCIIDOC_OPTS) $< > $@
+	TZ=UTC asciidoc $(ASCIIDOC_OPTS) $< > $@
 
 $(DESTDIR):
 	mkdir $@

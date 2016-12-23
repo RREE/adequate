@@ -1,5 +1,5 @@
 --                                                                    --
---  package Test_MQTT_Servers       Copyright (c)  Dmitry A. Kazakov  --
+--  package MQTT_Broker             Copyright (c)  Dmitry A. Kazakov  --
 --  Interface                                      Luebeck            --
 --                                                 Spring, 2016       --
 --                                                                    --
@@ -37,9 +37,8 @@ with Strings_Edit.Integers;        use Strings_Edit.Integers;
 with Alog;                         use Alog;
 with Alog.Logger;
 with Alog.Policy_DB;
-with Log;                          use Log;
+with Logs;                         use Logs;
 
-with Ada.Text_Io;
 
 package body MQTT_Broker is
 
@@ -78,7 +77,6 @@ package body MQTT_Broker is
 
    procedure Publish_Broker_Internals
    is
-      use Ada.Text_Io;
    begin
       --  Internals published by the mosquitto broker:
       --
@@ -237,7 +235,7 @@ package body MQTT_Broker is
       --  $SYS/broker/version
       --  The version of the broker. Static.
 
-      -- Put_Line ("(Publish_broker_internals)");
+      -- L.Log_Message (Info, "(Publish_broker_internals)");
       -- Publish (Factory.Server, "$SYS/broker/clients/connected", "1");
       Publish (Factory.Server, "$SYS/broker/messages/retained",
                Image (Get_Messages_Number (Factory.Server)));

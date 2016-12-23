@@ -3,6 +3,8 @@ with "../tools/components/components-connections_server.gpr";
 with "../tools/components/components-connections_server-mqtt.gpr";
 with "../tools/libalog/alog.gpr";
 
+with "aq_common";
+
 project Adequate is
    
    for Object_Dir use "obj";
@@ -10,5 +12,13 @@ project Adequate is
    for Source_Dirs use (".");
    
    for Main use ("aq_pub.adb", "aq_sub.adb", "aq_broker.adb");
-
+   
+   package Compiler is
+      for Default_Switches ("Ada") use Aq_Common.Compiler_Switches;
+   end Compiler;
+   
+   package Binder is
+      for Default_Switches ("Ada") use Aq_Common.Binder_Switches;
+   end Binder;
+   
 end Adequate;

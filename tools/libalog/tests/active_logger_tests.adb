@@ -508,12 +508,12 @@ package body Active_Logger_Tests is
          Log.Iterate (Process => Inc_Counter'Access);
 
          for I in 1 .. 30 loop
-            exit when Counter /= 0;
+            exit when Counter = 2;
             delay 0.1;
          end loop;
 
          Assert (Condition => Counter = 2,
-                 Message   => "Counter not 2");
+                 Message   => "Counter not 2:" & Counter'Img);
       end;
    end Verify_Iterate_Facilities;
 

@@ -30,7 +30,7 @@
 with Ada.Streams;        use Ada.Streams;
 with GNAT.Sockets.MQTT;  use GNAT.Sockets.MQTT;
 
-package MQTT_Clients is
+package MQTT_Rrd_Client is
 
    type MQTT_Client is new MQTT_Pier with private;
 
@@ -38,19 +38,14 @@ package MQTT_Clients is
                                   Session_Present : Boolean);
    procedure On_Connect_Rejected (Pier     : in out MQTT_Client;
                                   Response : Connect_Response);
-   procedure On_Ping_Response (Pier : in out MQTT_Client);
    procedure On_Publish (Pier      : in out MQTT_Client;
                          Topic     : String;
                          Message   : Stream_Element_Array;
                          Packet    : Packet_Identification;
                          Duplicate : Boolean;
                          Retain    : Boolean);
-   procedure On_Subscribe_Acknowledgement
-     (Pier   : in out MQTT_Client;
-      Packet : Packet_Identifier;
-      Codes  : Return_Code_List);
 
 private
    type MQTT_Client is new MQTT_Pier with null record;
 
-end MQTT_Clients;
+end MQTT_Rrd_Client;

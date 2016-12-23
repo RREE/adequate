@@ -1,8 +1,7 @@
-with Ada.Text_IO;
 with Alog;                         use Alog;
 with Alog.Logger;
 with Alog.Policy_DB;
-with Log;                          use Log;
+with Logs;                         use Logs;
 
 with Ada.Exceptions;               use Ada.Exceptions;
 with GNAT.Sockets.MQTT;            use GNAT.Sockets.MQTT;
@@ -10,8 +9,8 @@ with GNAT.Sockets.MQTT.Server;     use GNAT.Sockets.MQTT.Server;
 with GNAT.Sockets.Server;          use GNAT.Sockets.Server;
 with GNAT.Sockets.Server.Handles;  use GNAT.Sockets.Server.Handles;
 
-with Opt;                          use Opt;
-with MQTT_Clients;                 use MQTT_Clients;
+with Opt_Cli_Client;               use Opt_Cli_Client;
+with MQTT_Cli_Clients;             use MQTT_Cli_Clients;
 
 procedure Aq_Pub is
 
@@ -20,7 +19,7 @@ procedure Aq_Pub is
    Reference : Handle;
 
 begin
-   Opt.Set_Options;
+   Opt_Cli_Client.Set_Options;
 
    if Policy_DB.Get_Default_Loglevel = Debug then
       Trace_On (Factory  => Factory,
@@ -51,13 +50,13 @@ begin
       while not Is_Connected (Client) loop -- busy waiting
          delay 0.01;
       end loop;
-      L.Log_message (Debug, "MQTT client '" & Client_Name.all &
+      L.Log_Message (Debug, "MQTT client '" & Client_Name.all &
                        "' connected to '" & Server_Name.all & "'");
       Send_Connect (Client, Client_Name.all);
 
       Send_Publish (Client,
-                    Topic   => Opt.Topic_Text.all,
-                    Message => Opt.Message_Text.all,
+                    Topic   => Opt_Cli_Client.Topic_Text.all,
+                    Message => Opt_Cli_Client.Message_Text.all,
                     Packet  => Pub_Id);
       delay 0.1;
       Send_Disconnect (Client);
@@ -65,6 +64,6 @@ begin
 
 exception
 when Error : others =>
-   Ada.Text_IO.Put_Line ("Error: " & Exception_Information (Error));
+   L.Log_Message (Alog.Error, "Error: " & Exception_Information (Error));
 
 end Aq_Pub;

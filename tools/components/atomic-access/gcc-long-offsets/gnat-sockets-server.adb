@@ -3,7 +3,7 @@
 --  Implementation                                 Luebeck            --
 --                                                 Winter, 2012       --
 --                                                                    --
---                                Last revision :  22:45 07 Apr 2016  --
+--                                Last revision :  09:44 08 Oct 2016  --
 --                                                                    --
 --  This  library  is  free software; you can redistribute it and/or  --
 --  modify it under the terms of the GNU General Public  License  as  --
@@ -282,6 +282,36 @@ package body GNAT.Sockets.Server is
       return null;
    end Create_Transport;
 
+   procedure Create_Transport (Client : in out Connection) is
+   begin
+      if Client.Transport /= null then
+         Raise_Exception
+         (  Status_Error'Identity,
+            "Connection already has a transport layer"
+         );
+      end if;
+      Client.Transport :=
+         Create_Transport
+         (  Client.Listener.Factory,
+            Client.Listener,
+            Client'Unchecked_Access
+         );
+      if Client.Transport = null then
+         Raise_Exception
+         (  Status_Error'Identity,
+            "Connection transport layer is not supported"
+         );
+      end if;
+      Client.Session := Session_Handshaking;
+      if Client.Client then
+         Append
+         (  Client.Listener.Postponed,
+            Client'Unchecked_Access,
+            Client.Listener.Postponed_Count
+         );
+      end if;
+   end Create_Transport;
+
    procedure Data_Sent
              (  Listener : in out Connections_Server;
                 Client   : Connection_Ptr
@@ -313,7 +343,7 @@ package body GNAT.Sockets.Server is
       Client.Connect_No := Client.Connect_No + 1;
       Client.Session    := Session_Connecting;
       if Client.Connect_No > Client.Max_Connect_No then
-         Client.Client := False; -- Ensure connection object killed
+         Client.Reconnect := False; -- Ensure connection object killed
          Save_Occurrence (Client.Last_Error, Null_Occurrence);
          Stop (Listener, Client);
       else
@@ -332,7 +362,7 @@ package body GNAT.Sockets.Server is
       end if;
    exception
       when Connection_Error =>
-         Client.Client := False; -- Ensure connection object killed
+         Client.Reconnect := False; -- Ensure connection object killed
          Save_Occurrence (Client.Last_Error, Null_Occurrence);
          Stop (Listener, Client);
       when Error : Socket_Error =>
@@ -349,7 +379,7 @@ package body GNAT.Sockets.Server is
                "Connect socket",
                Error
             );
-            Client.Client := False; -- Ensure connection object killed
+            Client.Reconnect := False; -- Ensure object killed
             Save_Occurrence (Client.Last_Error, Error);
             Stop (Listener, Client);
          end if;
@@ -359,10 +389,15 @@ package body GNAT.Sockets.Server is
             "Connect socket",
             Error
          );
-         Client.Client := False; -- Ensure connection object killed
+         Client.Reconnect := False; -- Ensure connection object killed
          Save_Occurrence (Client.Last_Error, Error);
          Stop (Listener, Client);
    end Do_Connect;
+
+   procedure Elevated (Client : in out Connection) is
+   begin
+      null;
+   end Elevated;
 
    procedure Fill_From_Stream
              (  Buffer        : in out Output_Buffer;
@@ -664,10 +699,27 @@ package body GNAT.Sockets.Server is
       );
    end Is_Down;
 
+   function Is_Elevated (Client : Connection) return Boolean is
+   begin
+      return Client.Transport /= null;
+   end Is_Elevated;
+
    function Is_Incoming (Client : Connection) return Boolean is
    begin
       return not Client.Client;
    end Is_Incoming;
+
+   function Is_Opportunistic (Client : Connection) return Boolean is
+   begin
+      return False;
+   end Is_Opportunistic;
+
+   function Is_TLS_Capable
+            (  Factory : Connections_Factory
+            )  return Boolean is
+   begin
+      return False;
+   end Is_TLS_Capable;
 
    function Is_Trace_Received_On
             (  Factory : Connections_Factory;
@@ -710,12 +762,14 @@ package body GNAT.Sockets.Server is
          ", connected"
       );
       Free (Client.Transport);
-      Client.Transport :=
-         Create_Transport
-         (  Listener.Factory,
-            Listener'Unchecked_Access,
-            Client'Unchecked_Access
-         );
+      if not Is_Opportunistic (Client) then
+         Client.Transport :=
+            Create_Transport
+            (  Listener.Factory,
+               Listener'Unchecked_Access,
+               Client'Unchecked_Access
+            );
+      end if;
       Set (Listener.Read_Sockets, Client.Socket);
       if Client.Transport = null then -- No handshaking
          Client.Session := Session_Connected;
@@ -1693,6 +1747,7 @@ package body GNAT.Sockets.Server is
              )  is
       Old_Socket : constant Socket_Type := Client.Socket;
       Reconnect  : Boolean := not Listener.Finalizing
+                         and then Client.Reconnect
                          and then Client.Session /= Session_Down
                          and then not Client.Shutdown_Request;
    begin
@@ -2429,12 +2484,14 @@ package body GNAT.Sockets.Server is
                               Client
                            );
                            Listener.Clients := Listener.Clients + 1;
-                           This.Transport :=
-                              Create_Transport
-                              (  Listener.Factory,
-                                 Listener,
-                                 Client
-                              );
+                           if not Is_Opportunistic (This) then
+                              This.Transport :=
+                                 Create_Transport
+                                 (  Listener.Factory,
+                                    Listener,
+                                    Client
+                                 );
+                           end if;
                            if This.Transport = null then -- Ready
                               This.Session := Session_Connected;
                               Connected (This);
@@ -2628,7 +2685,7 @@ package body GNAT.Sockets.Server is
                         exception
                            when Connection_Error =>
                               if Client /= null then
-                                 Client.Client := False;
+                                 Client.Reconnect := False;
                                  Stop (Listener.all, Client);
                               end if;
                            when Error : others =>
@@ -2638,7 +2695,7 @@ package body GNAT.Sockets.Server is
                                  Error
                               );
                               if Client /= null then
-                                 Client.Client := False;
+                                 Client.Reconnect := False;
                                  Stop (Listener.all, Client);
                               end if;
                         end;

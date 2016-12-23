@@ -1,0 +1,26 @@
+abstract project Aq_Common is
+   
+   for Source_Dirs use ();
+   
+   Compiler_Switches := 
+     ("-g",           --  generate debug info
+      "-O2",          --  optimize
+      "-gnateE",      --  generate extra information in exception messages
+      
+      "-gnatyaknpr",  --  Style: check all casings: a:attribute,
+                      --  k:keywords, n:package Standard identifiers, 
+                      --  p:pragma, r:identifier references
+      
+      "-gnatybfhi",   --  Style: check b:no blanks at end of lines,
+                      --  f:no ff/vtabs, h: no htabs, i:if-then
+                      --  layout, u:no unnecessary blank lines
+      
+      "-gnatyx"       --  Style: check x:no extra parens         
+     );
+   
+   
+   Builder_Switches := ("-g");
+
+   Binder_Switches := ("-E");
+
+end Aq_Common;

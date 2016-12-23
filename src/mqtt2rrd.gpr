@@ -1,0 +1,24 @@
+with "../tools/libalog/alog";
+with "../tools/components/components";
+with "../tools/components/components-connections_server.gpr";
+with "../tools/components/components-connections_server-mqtt.gpr";
+
+with "aq_common";
+
+project Mqtt2Rrd is
+   for Source_Dirs use (".");
+   for Object_Dir use "obj";
+   for Exec_Dir use ".";
+   
+   for Main use ("mqtt2rrd.adb");
+   
+   
+   package Compiler is
+      for Default_Switches ("Ada") use Aq_Common.Compiler_Switches;
+   end Compiler;
+   
+   package Binder is
+      for Default_Switches ("Ada") use Aq_Common.Binder_Switches;
+   end Binder;
+
+end Mqtt2Rrd;
