@@ -102,6 +102,14 @@ package Generic_FIFO is
 --
    function Is_Full (Queue : FIFO) return Boolean;
 --
+-- Length - return the number of elements in the queue
+--
+-- Returns :
+--
+--    number of elements in the queue
+--
+   function Length (Queue : FIFO) return Natural;
+--
 -- Is_Preserved -- Check if element is purged
 --
 --    Queue   - The queue

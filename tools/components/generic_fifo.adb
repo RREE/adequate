@@ -84,6 +84,15 @@ package body Generic_FIFO is
       return Count = 1 or else Count = 1 - Queue.Size;
    end Is_Full;
 
+   function Length (Queue : FIFO) return Natural is
+      Len : Integer := Queue.Free - Queue.First;
+   begin
+      if Len < 0 then
+         Len := Len + Queue.Size;
+      end if;
+      return Len;
+   end Length;
+
    function Is_Preserved (Queue : FIFO; Element : Element_Type)
       return Boolean is
    begin

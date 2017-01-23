@@ -1,5 +1,6 @@
 with Ada.Exceptions;               use Ada.Exceptions;
 with Ada.Text_IO;
+with Ada.Real_Time;
 
 with Alog;                         use Alog;
 with Alog.Logger;
@@ -36,6 +37,7 @@ procedure MQTT2rrd is
 
    QoS : constant QoS_Level := At_Most_Once;
 
+   Keller : Cyclic_Sender;
 begin
    --  read config file(s).
    L.Log_Message (Debug, "MQTT2rrd started (client id = '" & Client_Name & "')");
@@ -59,7 +61,7 @@ begin
 
    TT:
    declare
-      Client : MQTT_Client renames MQTT_Client (Ptr (Reference).all);
+      Myself : MQTT_Client renames MQTT_Client (Ptr (Reference).all);
       Sub_Id : Packet_Identification (QoS);
       Sub_Nr : Packet_Identifier := 24; -- arbitrary, may be anything
    begin
@@ -67,16 +69,16 @@ begin
          Sub_Id.ID := 24; -- arbitrary
       end if;
 
-      Set_Overlapped_Size (Client, 4); -- One response packet (4 bytes) is
+      Set_Overlapped_Size (Myself, 4); -- One response packet (4 bytes) is
                                        -- queued for send without blocking
                                        -- receiving
 
-      Connect (Broker, Client'Unchecked_Access, Broker_Name, Broker_Port);
-      while not Is_Connected (Client) loop -- busy waiting
+      Connect (Broker, Myself'Unchecked_Access, Broker_Name, Broker_Port);
+      while not Is_Connected (Myself) loop -- busy waiting
          delay 0.01;
       end loop;
       L.Log_Message (Debug, Client_Name & " connected to " & Broker_Name & ':' & Broker_Port'Img);
-      Send_Connect (Client, Client_Name);
+      Send_Connect (Myself, Client_Name);
 
 
       --  subscribe to configured patterns
@@ -123,10 +125,22 @@ begin
             L.Log_Message (Debug, "rrdname("&P&")="&Rrd.Rrdname(P));
 
             L.Log_Message (Info, "subscribe to " & P);
-            Send_Subscribe (Client, Sub_Nr, P, QoS);
+            Send_Subscribe (Myself, Sub_Nr, P, QoS);
          end loop;
       end;
    end TT;
+
+   loop
+      declare
+         use Ada.Real_Time;
+         Sec  : Seconds_Count;
+         Span : Time_Span;
+      begin
+         Split (Clock, Sec, Span);
+         exit when (Sec mod 60) = 59;
+      end;
+   end loop;
+   Keller.Set_Config ("z3-2", 13900, "treppenhaus_keller.rrd");
 
    loop
       --  wait for incoming message

@@ -45,6 +45,14 @@ package MQTT_Rrd_Client is
                          Duplicate : Boolean;
                          Retain    : Boolean);
 
+
+   task type Cyclic_Sender is
+      entry Set_Config (Server_Name : String;
+                        Server_Port : GNAT.Sockets.Port_Type;
+                        Filename    : String);
+   end Cyclic_Sender;
+
+
 private
    type MQTT_Client is new MQTT_Pier with null record;
 

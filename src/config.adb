@@ -207,27 +207,38 @@ package body Config is
                      Default : Integer := 0)
    return Integer
    is
-      Value_As_String : constant String := Value_Of(Cfg, Section, Mark);
+      Line              : String(1 .. Max_Line_Length);
+      Value_Start       : Natural;
+      Value_End         : Natural;
+      Found_Line        : Natural;
    begin
-      if Value_As_String'Length > 2 and then
-        Value_As_String(Value_As_String'First..Value_As_String'First+1) = "0x"
-      then
-         return Integer'Value("16#" &
-                              Value_As_String(Value_As_String'First+2 ..
-                                              Value_As_String'Last) &
-                              "#");
-      elsif Value_As_String'Length > 0  and then
-         Is_Number_Start(Value_As_String(Value_As_String'First))
-      then
-         return Integer'Value(Value_As_String);
-      else
-         Type_Error(Cfg, Value_As_String, "an integer number");
+      Get_Value(Cfg, Section, Mark, Line, Value_Start, Value_End, Found_Line);
+
+      if Found_Line = 0 then
          return Default;
       end if;
 
+      declare
+         Value_As_String : constant String := Line (Value_Start .. Value_End);
+      begin
+         if Value_As_String'Length > 2 and then
+           Line (Value_Start .. Value_Start+1) = "0x"
+         then
+            return Integer'Value("16#" &
+                                   Line(Value_Start+2 .. Value_End) &
+                                   "#");
+         elsif Value_As_String'Length > 0  and then
+           Is_Number_Start(Line(Value_Start))
+         then
+            return Integer'Value(Value_As_String);
+         else
+            Type_Error(Cfg, Value_As_String, "an integer number in line"&Found_Line'Img);
+            return Default;
+         end if;
+      end;
    exception
       when others =>
-         Type_Error(Cfg, Value_As_String, "an integer number");
+         Type_Error(Cfg, Line (Value_Start..Value_End), "an integer number in line"&Found_Line'Img);
          return Default;
    end Value_Of;
 
