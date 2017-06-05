@@ -1,0 +1,28 @@
+with "../tools/libalog/alog";
+with "../tools/components/components";
+with "../tools/components/components-connections_server.gpr";
+with "../tools/components/components-connections_server-mqtt.gpr";
+with "../tools/components/components-connections_server-http_server.gpr";
+-- with "aws.gpr";
+
+with "aq_common";
+
+project Mqtt2Influx is
+   for Source_Dirs use (".");
+   for Object_Dir use "obj";
+   for Exec_Dir use ".";
+   
+   for Main use ("mqtt2influx.adb");
+   -- for Main use ("send_test_influx.adb");
+   -- for Main use ("send_test_influx_direct.adb");
+   
+   
+   package Compiler is
+      for Default_Switches ("Ada") use Aq_Common.Compiler_Switches;
+   end Compiler;
+   
+   package Binder is
+      for Default_Switches ("Ada") use Aq_Common.Binder_Switches;
+   end Binder;
+
+end Mqtt2Influx;
