@@ -29,7 +29,9 @@
 
 with Ada.Exceptions;
 with Ada.Strings.Bounded;
-with Ada.Real_Time;
+with Ada.Calendar; -- Real_Time;
+with Ada.Calendar.Formatting;
+
 with Alog;                         use Alog;
 with Alog.Logger;                  use Alog.Logger;
 with Logs;                         use Logs;
@@ -38,6 +40,8 @@ with GNAT.Sockets.Server;          use GNAT.Sockets.Server;
 with Strings_Edit.Integers;        use Strings_Edit.Integers;
 with Generic_FIFO;
 with Rrd;
+
+with Ada.Text_IO;
 
 package body MQTT_Rrd_Client is
 
@@ -189,15 +193,15 @@ package body MQTT_Rrd_Client is
    ------------------------------------------------------------------------------
 
    task body Cyclic_Sender is
-      use Ada.Real_Time;
-      Period          : constant Time_Span := Seconds (60);
+      use Ada.Calendar;
+      -- use Ada.Real_Time;
+      Period          : constant Duration := 60.0;
+      -- Period          : constant Time_Span := Seconds (60);
       Next            : Time               := Clock + Period;
       Nr_Of_Msgs      : Natural;
       Address         : Sock_Addr_Type;
-      Socket          : Socket_Type;
+      Cyc_Snd         : Socket_Type;
       Channel         : Stream_Access;
-      -- Rrdserv : constant String  := Rrd.Rrdserv (Topic);
-      -- Rrdport : constant Natural := Rrd.Rrdport (Topic);
       Rrdfile         : Config_Strings.Bounded_String;
       Server_Port_Str : Config_Strings.Bounded_String;
 
@@ -217,51 +221,92 @@ package body MQTT_Rrd_Client is
 
 
       loop
-         delay until Next;
-         Next := Next + Period;
-         L.Log_Message (Info, "cyclic_sender active");
-
-         Nr_Of_Msgs := Msg_Q.Length;
-
-         Names := Message_Strings.Null_Bounded_String;
-         Values := Message_Strings.Null_Bounded_String;
-         for M in 1 .. Nr_Of_Msgs loop
-            declare
-               M : constant Topic_And_Message := Msg_Q.Get;
-
-               Rrdname   : constant String := Rrd.Rrdname (+M.Topic);
-               Value_Str : constant String := +M.Message;
-
-            begin
-               Message_Strings.Append (Names, ':');
-               Message_Strings.Append (Names, Rrdname);
-               Message_Strings.Append (Values, ':');
-               Message_Strings.Append (Values, Value_Str);
-            end;
-         end loop;
-
-         Build_Rrd_Message:
-         declare
-            use Message_Strings;
-            Message : Message_Str := Null_Bounded_String;
+         Cycle:
          begin
-            Append (Message, "update " & (+Rrdfile) & " -t ");
-            --  remove leading colon from the names
-            Append (Message, Slice(Names, 2, Length(Names)));
-            Append (Message, " N");
-            Append (Message, +Values);
-            Append (Message, ASCII.LF);
+            delay until Next;
+            Next := Next + Period;
+            L.Log_Message (Info, "cyclic_sender active");
 
-            Create_Socket (Socket);
-            -- Set_Socket_Option (Socket, Socket_Level, (Reuse_Address, True));
-            Connect_Socket (Socket, Address);
-            Channel := Stream(Socket);
-            L.Log_Message (Info, "cyclic_sender created socket to " & (+Server_Port_Str));
-            String'Write (Channel, +Message);
-            Close_Socket (Socket);
+            Create_Socket (Cyc_Snd);
+            Set_Socket_Option (Cyc_Snd, Socket_Level, (Reuse_Address, True));
+            Connect_Socket (Cyc_Snd, Address);
+            L.Log_Message (Info, "cyclic_sender created socket to " & Image(Address));
+            Channel := Stream(Cyc_Snd);
 
-            L.Log_Message (Info, "sending '" & (+Message) & "' to " & (+Server_Port_Str));
-         end Build_Rrd_Message;
+            Nr_Of_Msgs := Msg_Q.Length;
+
+            Names := Message_Strings.Null_Bounded_String;
+            Values := Message_Strings.Null_Bounded_String;
+            for M in 1 .. Nr_Of_Msgs loop
+               declare
+                  M : constant Topic_And_Message := Msg_Q.Get;
+
+                  Rrdname   : constant String := Rrd.Rrdname (+M.Topic);
+                  Value_Str : constant String := +M.Message;
+
+               begin
+                  Message_Strings.Append (Names, ':');
+                  Message_Strings.Append (Names, Rrdname);
+                  Message_Strings.Append (Values, ':');
+                  Message_Strings.Append (Values, Value_Str);
+               end;
+            end loop;
+
+            Build_Rrd_Message:
+            declare
+               use Message_Strings;
+               use Ada.Calendar.Formatting;
+               Message : Message_Str := Null_Bounded_String;
+               M1 : constant Minute_Number := Minute (Clock);
+               M2 : constant Minute_Number := Minute (Clock+60.0);
+               M3 : constant Minute_Number := Minute (Clock+120.0);
+               M1_S : constant String := M1'Img(2..M1'Img'Last);
+               M2_S : constant String := M2'Img(2..M2'Img'Last);
+               M3_S : constant String := M3'Img(2..M3'Img'Last);
+            begin
+               Append (Message, "updatev " & (+Rrdfile) & " -t ");
+               --  remove leading colon from the names
+               --  Append (Message, Slice(Names, 2, Length(Names)));
+               --  Append (Message, " N");
+               --  Append (Message, +Values);
+               --  Append (Message, ASCII.CR);
+               --  Append (Message, ASCII.LF);
+               Append (Message, "T_Vorlauf,T_Heizkoerper,T_Ruecklauf N:");
+               Append (Message, M1_S&':'&M2_S&':'&M3_S);
+
+               String'Write (Channel, +Message);
+               L.Log_Message (Info, "sending '" & (+Message) & "' to " & (+Server_Port_Str));
+               -- delay 0.05;
+
+               if False then
+                  declare
+                     Response : constant String := String'Input (Channel);
+                  begin
+                     L.Log_Message (Info, "response '" & Response & ''');
+                  end;
+               else
+                  Char_Response:
+                  declare
+                     Data    : Stream_Element_Array (1 .. 5350);
+                     Data_Len : Stream_Element_Count;
+                  begin
+                     loop
+                        Ada.Streams.Read (Channel.all, Data, Data_Len);
+                        exit when Data_Len = 0;
+                        for I in 1 .. Data_Len loop
+                           Ada.Text_IO.Put (Character'Val (Data (I)));
+                        end loop;
+                     end loop;
+                  end Char_Response;
+               end if;
+            end Build_Rrd_Message;
+
+            Close_Socket (Cyc_Snd);
+
+         exception
+         when E : others =>
+            L.Log_Message (Error, Ada.Exceptions.Exception_Information (E));
+         end Cycle;
       end loop;
    end Cyclic_Sender;
 

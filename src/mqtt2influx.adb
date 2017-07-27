@@ -1,17 +1,12 @@
 with Ada.Exceptions;               use Ada.Exceptions;
-with Ada.Text_IO;
-with Ada.Real_Time;
 
 with Alog;                         use Alog;
 with Alog.Logger;
 with Alog.Policy_DB;
-with Alog.Facilities.File_Descriptor;
 with Logs;                         use Logs;
 
 with GNAT.Sockets.MQTT;            use GNAT.Sockets.MQTT;
-with GNAT.Sockets.MQTT.Server;     use GNAT.Sockets.MQTT.Server;
 with GNAT.Sockets.Server;          use GNAT.Sockets.Server;
-with GNAT.Sockets.Server.Handles;  use GNAT.Sockets.Server.Handles;
 with Strings_Edit.Integers;        use Strings_Edit.Integers;
 
 with MQTT_Influx_Client;           use MQTT_Influx_Client;
@@ -118,6 +113,7 @@ begin
    end loop;
    L.Log_Message (Debug, My_Name & " connected to MQTT broker " & Broker_Name & ':' & Broker_Port'Img);
    Send_Connect (Myself, My_Name);
+   L.Log_Message (Debug, "presented myself at broker");
 
    delay 0.1;
 

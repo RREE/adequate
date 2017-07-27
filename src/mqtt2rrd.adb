@@ -109,7 +109,6 @@ begin
          Remove_Section ("broker");
          Remove_Section ("logs");
          Remove_Section ("defaults");
-         L.Log_Message (Debug, "0");
          L.Log_Message (Debug, "default_server = " & Rrdserver_Default);
          L.Log_Message (Debug, "default_port = " & Image(Rrdport_Default));
          L.Log_Message (Debug, "default_file = " & Rrdfile_Default);
@@ -127,6 +126,11 @@ begin
             L.Log_Message (Info, "subscribe to " & P);
             Send_Subscribe (Myself, Sub_Nr, P, QoS);
          end loop;
+
+         Keller.Set_Config (Rrdserver_Default,
+                            GNAT.Sockets.Port_Type (Rrdport_Default),
+                            Rrdfile_Default);
+
       end;
    end TT;
 
@@ -140,7 +144,6 @@ begin
          exit when (Sec mod 60) = 59;
       end;
    end loop;
-   Keller.Set_Config ("z3-2", 13900, "treppenhaus_keller.rrd");
 
    loop
       --  wait for incoming message

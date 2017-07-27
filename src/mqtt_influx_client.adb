@@ -28,7 +28,6 @@
 -- 2016-12: R. Ebert, use alog instead of Text_IO
 
 with Ada.Exceptions;
-with Ada.Strings.Bounded;
 with Ada.Calendar; -- Real_Time;
 with Ada.Calendar.Formatting;
 
@@ -37,14 +36,7 @@ with Alog.Logger;                  use Alog.Logger;
 with Logs;                         use Logs;
 
 with GNAT.Sockets;                 use GNAT.Sockets;
---  with GNAT.Sockets.Server;          use GNAT.Sockets.Server;
---  with GNAT.Sockets.Server.Handles;  use GNAT.Sockets.Server.Handles;
 with Strings_Edit.Integers;        use Strings_Edit.Integers;
---  with GNAT.Sockets.Connection_State_Machine.HTTP_Server;
---  with GNAT.Sockets.Connection_State_Machine.HTTP_Client.Signaled;
---  use  GNAT.Sockets.Connection_State_Machine.HTTP_Client.Signaled;
-with Strings_Edit.Streams;
---  with Generic_FIFO;
 
 with Influx;
 
@@ -55,6 +47,8 @@ package body MQTT_Influx_Client is
    procedure On_Connect_Accepted (Pier            : in out MQTT_Client;
                                   Session_Present : Boolean)
    is
+      pragma Unreferenced (Pier);
+      pragma Unreferenced (Session_Present);
    begin
       L.Log_Message (Info, "MQTT connect accepted");
    end On_Connect_Accepted;
@@ -63,6 +57,7 @@ package body MQTT_Influx_Client is
    procedure On_Connect_Rejected (Pier     : in out MQTT_Client;
                                   Response : Connect_Response)
    is
+      pragma Unreferenced (Pier);
    begin
       L.Log_Message (Warning, "Connect rejected " & Image (Response));
    end On_Connect_Rejected;
@@ -77,8 +72,6 @@ package body MQTT_Influx_Client is
    is
       use Strings_Edit;
       use Strings_Edit.Integers;
-      use Strings_Edit.Streams;
-
       use Influx;
 
       To_Influx : Socket_Type;
