@@ -29,6 +29,7 @@
 
 -- Change log
 --
+-- 19-Aug-2017:   RE: Report offending line number in case of error
 -- 16-Jan-2017:  GdM: Variable terminator symbol can be different than '='
 -- 18-Dec-2016:   RE: Added Read_Sections
 -- 26-Oct-2011:  GdM/DB: Init also as a function

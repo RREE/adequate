@@ -8,6 +8,7 @@ mqtt2influx
 mqtt2influxd
 send_test_influx
 send_test_influx_direct
+test_split_topics
 
 # Object file
 *.o
