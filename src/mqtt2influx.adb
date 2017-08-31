@@ -1,7 +1,9 @@
 with Ada.Exceptions;               use Ada.Exceptions;
+with Ada.Strings.Maps.Constants;
+with Ada.Strings.Fixed;
+with Ada.Characters.Handling;
 
 with Alog;                         use Alog;
-with Alog.Logger;
 with Alog.Policy_DB;
 with Logs;                         use Logs;
 
@@ -30,11 +32,21 @@ procedure MQTT2Influx is
 
 
    Influxserver_Default : constant String :=
-     Config.Value_Of (Cfg, "defaults", "influxdbserver", "localhost");
+     Config.Value_Of (Cfg, "influx", "server", "localhost");
    Influxport_Default : constant Natural :=
-     Config.Value_Of (Cfg, "defaults", "influxdbport", 8086);
+     Config.Value_Of (Cfg, "influx", "port", 8086);
    Influxdb_Default : constant String :=
-     Config.Value_Of (Cfg, "defaults", "influxdb", "testdata_db");
+     Config.Value_Of (Cfg, "influx", "db", "testdata_db");
+   Topic_As_Attribute_Default : constant String :=
+     Config.Value_Of (Cfg, "defaults", "topic_as_attribute", "false");
+   Device_As_Attribute_Default : constant String :=
+     Config.Value_Of (Cfg, "defaults", "device_as_attribute", "false");
+   Location_As_Attribute_Default : constant String :=
+     Config.Value_Of (Cfg, "defaults", "location_as_attribute", "false");
+   Device_Default : constant String :=
+     Config.Value_Of (Cfg, "defaults", "device", "unknown_device");
+   Location_Default : constant String :=
+     Config.Value_Of (Cfg, "defaults", "location", "unknown_location");
 
 
    Factory   : aliased Connections_Factory;
@@ -64,26 +76,163 @@ procedure MQTT2Influx is
    --  one of the predefined sections doesn't exist, don't care
    end Remove_Section;
 
+   --
+   -- topic handling
+   --
+   type Str_Token is record
+      Start_Ptr : Natural;
+      End_Ptr   : Natural;
+   end record;
+   subtype Topic_Range is Positive range 1 .. 500;
+   type Level_Array is array (Topic_Range) of Str_Token;
+   Levels : Level_Array;
+   Level_Count : Topic_Range;
+
+
+   procedure Parse_Topic (Topic : String) is
+      use Ada.Strings.Fixed;
+
+      Idx : Topic_Range renames Level_Count;
+      Pos : Natural := Topic'First;
+   begin
+      Levels := (others => (1, 0));
+      Idx := 1;
+
+      loop
+         Levels(Idx).Start_Ptr := Pos;
+         Pos := Index (Topic(Pos .. Topic'Last), "/");
+         exit when Pos = 0;
+         Levels(Idx).End_Ptr := Pos-1;
+         Pos := Pos + 1;
+         Idx := Idx + 1;
+      end loop;
+      Levels(Idx).End_Ptr := Topic'Last;
+   end Parse_Topic;
+
+
+   function Level_From_Esc_Seq (Topic : String; Esc : String) return String
+   is
+      use Ada.Characters.Handling;
+      Device : constant String (1..Esc'Length) := Esc;
+      Idx : Integer;
+   begin
+      if Device(1) ='%' and then
+        (Is_Digit(Device(2)) or else (Device(2) = '-' and then Is_Digit(Device(3))))
+      then
+         Idx := Integer'Value (Device(2..Device'Last));
+         if Idx in 1 .. Level_Count then
+            return Topic (Levels(Idx).Start_Ptr .. Levels(Idx).End_Ptr);
+         elsif -Idx in 1 .. Level_Count then
+            Idx := Level_Count + 1 + Idx;
+            return Topic (Levels(Idx).Start_Ptr .. Levels(Idx).End_Ptr);
+         else
+            return Esc;
+         end if;
+      else
+         return Esc;
+      end if;
+   end Level_From_Esc_Seq;
+
+
+   procedure Disp_Levels (Topic : String) is
+   begin
+      for I in 1 .. Level_Count loop
+         L.Log_Message (Debug, "topic : " &Topic&", level ="&I'Img& ", level = " &
+                          Topic(Levels(I).Start_Ptr .. Levels(I).End_Ptr));
+      end loop;
+   end Disp_Levels;
+
+   --
+   --
+   --
+   function Image (B : Boolean) return String
+   is
+   begin
+      if B then
+         return "True";
+      else
+         return "False";
+      end if;
+   end Image;
+
+
 begin
    L.Log_Message (Debug, "MQTT2Influx started (MQTT client id = '" & My_Name & " " & My_Version & "')");
 
    --  read configured patterns
    Remove_Section ("broker");
    Remove_Section ("logs");
+   Remove_Section ("influx");
    Remove_Section ("defaults");
-   L.Log_Message (Debug, "default Influx server  = " & Influxserver_Default);
-   L.Log_Message (Debug, "default Influx port    = " & Image(Influxport_Default));
-   L.Log_Message (Debug, "default Influx DB name = " & Influxdb_Default);
+   L.Log_Message (Debug, "Influx server          = " & Influxserver_Default);
+   L.Log_Message (Debug, "Influx port            = " & Image(Influxport_Default));
+   L.Log_Message (Debug, "Influx DB name         = " & Influxdb_Default);
+   L.Log_Message (Debug, "default show topic     = " & Topic_As_Attribute_Default);
+   L.Log_Message (Debug, "default show device    = " & Device_As_Attribute_Default);
+   L.Log_Message (Debug, "default show location  = " & Location_As_Attribute_Default);
+   L.Log_Message (Debug, "default device         = " & Device_Default);
+   L.Log_Message (Debug, "default location       = " & Location_Default);
 
    for P of Patterns loop
+      Parse_Topic(P);
+      -- Disp_Levels(P);
+
       Influx.Influxserv.Insert (P, Config.Value_Of (Cfg, P, "influxdbserver", Influxserver_Default));
       L.Log_Message (Debug, "influxserver("&P&")="&Influx.Influxserv(P));
       Influx.Influxport.Insert (P, GNAT.Sockets.Port_Type (Config.Value_Of (Cfg, P, "influxdbport", Influxport_Default)));
       -- L.Log_Message (Debug, "influxport("&P&")="&Image(Natural(Influx.Influxport(P))));
       Influx.Influxdb.Insert (P, Config.Value_Of (Cfg, P, "influxdb", Influxdb_Default));
       L.Log_Message (Debug, "influxdb("&P&")="&Influx.Influxdb(P));
+
+
       Influx.Influxname.Insert (P, Config.Value_Of (Cfg, P, "influxname", P));
       L.Log_Message (Debug, "influxname("&P&")="&Influx.Influxname(P));
+
+      Show_Topic:
+      declare
+         use Ada.Strings.Fixed;
+         use Ada.Strings.Maps.Constants;
+
+         Show : constant Boolean :=
+           Translate (Config.Value_Of (Cfg, P, "topic_as_attribute", Topic_As_Attribute_Default),
+                      Lower_Case_Map) = "true";
+      begin
+         Influx.Show_Topic.Insert (P, Show);
+         L.Log_Message (Debug, "show_topic("&P&")="&(if Influx.Show_Topic(P) then "True" else "False"));
+      end Show_Topic;
+      Show_Device:
+      declare
+         use Ada.Strings.Fixed;
+         use Ada.Strings.Maps.Constants;
+
+         Show : constant Boolean :=
+           Translate (Config.Value_Of (Cfg, P, "device_as_attribute", Device_As_Attribute_Default),
+                      Lower_Case_Map) = "true";
+         Device : constant String := Config.Value_Of (Cfg, P, "device", Device_Default);
+      begin
+         Influx.Show_Device.Insert (P, Show);
+         L.Log_Message (Debug, "show_device("&P&")="&Image(Influx.Show_Device(P)));
+         -- (if Influx.Show_Device(P) then "True" else "False"));
+         Influx.Device.Insert (P, Level_From_Esc_Seq (P, Device));
+         L.Log_Message (Debug, "device("&P&")="&Influx.Device(P));
+      end Show_Device;
+      Show_Location:
+      declare
+         use Ada.Strings.Fixed;
+         use Ada.Strings.Maps.Constants;
+
+         Show : constant Boolean :=
+           Translate (Config.Value_Of (Cfg, P, "location_as_attribute", Device_As_Attribute_Default),
+                      Lower_Case_Map) = "true";
+         Location : constant String := Config.Value_Of (Cfg, P, "location", Location_Default);
+      begin
+         Influx.Show_Location.Insert (P, Show);
+         L.Log_Message (Debug, "show_location(" & P & ")=" & Image (Influx.Show_Location(P)));
+
+         Influx.Location.Insert (P, Level_From_Esc_Seq (P, Location));
+         L.Log_Message (Debug, "location("&P&")="&Influx.Location(P));
+
+      end Show_Location;
    end loop;
 
 

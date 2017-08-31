@@ -4,6 +4,7 @@ with "../tools/components/components-connections_server.gpr";
 with "../tools/components/components-connections_server-mqtt.gpr";
 with "../tools/components/components-connections_server-http_server.gpr";
 -- with "aws.gpr";
+with "florist";
 
 with "aq_common";
 
@@ -13,8 +14,10 @@ project Mqtt2Influx is
    for Exec_Dir use ".";
    
    for Main use ("mqtt2influx.adb");
-   -- for Main use ("send_test_influx.adb");
-   -- for Main use ("send_test_influx_direct.adb");
+   for Main use ("mqtt2influxd.adb");
+   for Main use ("test_split_topics.adb");
+   for Main use ("send_test_influx.adb");
+   for Main use ("send_test_influx_direct.adb");
    
    
    package Compiler is

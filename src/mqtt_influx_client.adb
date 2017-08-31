@@ -28,14 +28,19 @@
 -- 2016-12: R. Ebert, use alog instead of Text_IO
 
 with Ada.Exceptions;
-with Ada.Calendar; -- Real_Time;
-with Ada.Calendar.Formatting;
+-- with Ada.Calendar; -- Real_Time;
+-- with Ada.Calendar.Formatting;
+-- with Ada.Text_IO;
+with Ada.Strings.Fixed;
+-- with Ada.Strings.Maps;
 
 with Alog;                         use Alog;
 with Alog.Logger;                  use Alog.Logger;
 with Logs;                         use Logs;
 
 with GNAT.Sockets;                 use GNAT.Sockets;
+with Strings_Edit;
+-- with Strings_Edit.Streams;
 with Strings_Edit.Integers;        use Strings_Edit.Integers;
 
 with Influx;
@@ -73,6 +78,7 @@ package body MQTT_Influx_Client is
       use Strings_Edit;
       use Strings_Edit.Integers;
       use Influx;
+      -- use Ada.Strings.Maps;
 
       To_Influx : Socket_Type;
       Address : Sock_Addr_Type;
@@ -82,7 +88,13 @@ package body MQTT_Influx_Client is
       Content  : String (1 .. 400);
       Out_Ptr  : Natural         := 1;
       Cont_Ptr : Natural         := 1;
+      -- Ptr      : Natural;
       CRLF     : constant String := ASCII.CR & ASCII.LF;
+
+      --  MQTT_Name_Set : constant Character_Set := To_Set ("0123456789") or
+      --    To_Set ("abcdefghijklmnopqrstuvwxyz") or To_Set ("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+
    begin
       L.Log_Message (Info, "received " & Topic & " = " ); -- & Image (Message));
       On_Publish (MQTT_Pier (Pier), Topic, Message, Packet, Duplicate, Retain);
@@ -97,6 +109,7 @@ package body MQTT_Influx_Client is
       L.Log_Message (Info, "connected to influx" );
       Channel := Stream (To_Influx);
 
+      Gen_Output:
       declare
          use Strings_Edit;
          Port : constant Natural := Natural(Port_Type'(Influxport(Topic)));
@@ -121,6 +134,21 @@ package body MQTT_Influx_Client is
          Put (Output, Out_Ptr, "Content-Length: ");
 
          Put (Content, Cont_Ptr, Influxname(Topic));
+         if Show_Topic (Topic) then
+            Put (Content, Cont_Ptr, ",topic=""");
+            Put (Content, Cont_Ptr, Topic);
+            Put (Content, Cont_Ptr, '"');
+         end if;
+         if Show_Device (Topic) then
+            Put (Content, Cont_Ptr, ",device=""");
+            Put (Content, Cont_Ptr, Device(Topic));
+            Put (Content, Cont_Ptr, '"');
+         end if;
+         if Show_Location (Topic) then
+            Put (Content, Cont_Ptr, ",location=""");
+            Put (Content, Cont_Ptr, Location(Topic));
+            Put (Content, Cont_Ptr, '"');
+         end if;
          Put (Content, Cont_Ptr, " value=");
          Put (Content, Cont_Ptr, Msg_Str);
          Cont_Ptr := Cont_Ptr - 1;
@@ -134,7 +162,7 @@ package body MQTT_Influx_Client is
          Out_Ptr := Out_Ptr - 1;
          String'Write (Channel, Output(1..Out_Ptr));
          L.Log_Message (Info, "sent '"&Output(1..Out_Ptr)&''');
-      end;
+      end Gen_Output;
       Close_Socket (To_Influx);
       L.Log_Message (Info, "closed Influx socket" );
 

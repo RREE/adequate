@@ -10,10 +10,11 @@ package body Config is
 
    procedure Free is new Ada.Unchecked_Deallocation(String, Str_Ptr);
 
-   procedure Init(Cfg              : out Configuration;
-                  File_Name        :     String;
-                  Case_Sensitive   :     Boolean := True;
-                  On_Type_Mismatch :     Type_Mismatch_Action := Raise_Data_Error
+   procedure Init(Cfg                 : out Configuration;
+                  File_Name           :     String;
+                  Case_Sensitive      :     Boolean := True;
+                  On_Type_Mismatch    :     Type_Mismatch_Action := Raise_Data_Error;
+                  Variable_Terminator :     Character := '='
                   )
    is
    begin
@@ -21,17 +22,19 @@ package body Config is
       Cfg.Config_File := new String'(File_Name);
       Cfg.Case_Sensitive:= Case_Sensitive;
       Cfg.On_Type_Mismatch:= On_Type_Mismatch;
+      Cfg.Variable_Terminator:= Variable_Terminator;
    end Init;
 
-   function Init(File_Name        :  String;
-                 Case_Sensitive   :  Boolean := True;
-                 On_Type_Mismatch :  Type_Mismatch_Action := Raise_Data_Error
+   function Init(File_Name           :  String;
+                 Case_Sensitive      :  Boolean := True;
+                 On_Type_Mismatch    :  Type_Mismatch_Action := Raise_Data_Error;
+                 Variable_Terminator :  Character := '='
                  )
    return Configuration
    is
       Cfg: Configuration;
    begin
-      Init(Cfg, File_Name, Case_Sensitive, On_Type_Mismatch);
+      Init(Cfg, File_Name, Case_Sensitive, On_Type_Mismatch, Variable_Terminator);
       return Cfg;
    end Init;
 
@@ -118,7 +121,7 @@ package body Config is
                         Line_End := Comment_Ind - 1;
                      end if;
                      Equal_Ind := Index(Source  => Line(Line'First .. Line_End),
-                                        Pattern => "=");
+                                        Pattern => (1 => Cfg.Variable_Terminator));
                      if Equal_Ind >= Line'First then
                         Found_Mark_Start :=
                           Index_Non_Blank(Line(Line'First .. Equal_Ind-1), Forward);
@@ -130,8 +133,9 @@ package body Config is
                         Found_Mark_End :=
                           Index_Non_Blank(Line(Line'First .. Line_End), Backward);
                      end if;
-                     -- pragma Debug(Put_Line("Config: found_mark    => " &
-                     -- Line(Found_Mark_start..Found_Mark_End)));
+                     --   Put_Line("Config: found_mark    => [" &
+                     --   Line(Found_Mark_start..Found_Mark_End) & "] equal ind=" & Equal_Ind'Img &
+                     --   " termi=[" & Cfg.Variable_Terminator & ']');
                      if Found_Mark_Start > 0 and then
                        Found_Mark_End > 0
                      then
@@ -377,9 +381,9 @@ package body Config is
          --
          if Line_Count = Found_Line then -- Change this line
             Equal_Ind := Index(Source  => Line(1 .. Line_End),
-                               Pattern => "=");
-            if Equal_Ind < 1 then -- No '=' yet, will change...
-              curr.line:= new String'(Line(1 .. Line_End) & '=' & New_Value);
+                               Pattern => (1 => Cfg.Variable_Terminator));
+            if Equal_Ind < 1 then -- No '=' or so yet, will change...
+              curr.line:= new String'(Line(1 .. Line_End) & Cfg.Variable_Terminator & New_Value);
             else
               curr.line:= new String'(Line(1 .. Equal_Ind) & New_Value);
             end if;
@@ -470,6 +474,54 @@ package body Config is
          raise Section_Not_Found;
       end if;
    end Replace_Section;
+
+
+   --  Disable the Mark using a semicolon prefix
+   --
+   procedure Disable(Cfg      : Configuration;
+                     Section  : String;
+                     Mark     : String)
+   is
+      Line              : String(1 .. Max_Line_Length);
+      Value_Start       : Natural;
+      Value_End         : Natural;
+      Found_Line        : Natural;
+      Line_End          : Natural    := 0;
+      Line_Count        : Natural    := 0;
+      use Ada.Text_IO;
+      File              : File_Type;
+      use Ada.Strings.Fixed;
+      --
+      root, curr, new_ini_line: Ini_Line_Ptr:= null;
+   begin
+      Get_Value(Cfg, Section, Mark, Line, Value_Start, Value_End, Found_Line);
+      if Found_Line = 0 then
+         raise Location_Not_Found;
+      end if;
+      Open(File, In_File, Cfg.Config_File.all);
+      Read_File:
+      while not End_Of_File(File) loop
+         Get_Line(File, Line, Line_End);
+         Line_Count:= Line_Count + 1;
+         --
+         new_ini_line:= new Ini_Line;
+         if root = null then
+           root:= new_ini_line;
+         else
+           curr.next:= new_ini_line;
+         end if;
+         curr:= new_ini_line;
+         --
+         if Line_Count = Found_Line then -- Comment out this line
+            curr.line:= new String'("; " & Line(1 .. Line_End));
+         else -- any other line: just copy
+            curr.line:= new String'(Line(1 .. Line_End));
+         end if;
+      end loop Read_File;
+      Close(File);
+      -- Now, write the new file
+      Write_and_Free(Cfg, root);
+   end Disable;
 
 
    function Read_Sections (Cfg : Configuration) return Section_List

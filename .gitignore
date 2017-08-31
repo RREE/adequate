@@ -4,6 +4,10 @@ obj
 aq_pub
 aq_sub
 aq_broker
+mqtt2influx
+mqtt2influxd
+send_test_influx
+send_test_influx_direct
 
 # Object file
 *.o

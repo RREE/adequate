@@ -29,7 +29,7 @@ project Alog_Common is
    type Lib_Type is ("static", "dynamic");
    Libtype : Lib_Type := external ("LIBRARY_KIND", "static");
 
-   Languages := ("Ada");
+   Languages := ("Ada", "C");
 
    Compiler_Switches := ("-gnatygAdISuxo",
                          "-gnatVa",

@@ -27,7 +27,7 @@ procedure Send_Test_Influx_Direct is
 
    task body Cyclic_Sender is
       use Ada.Calendar;
-      Period          : constant Duration := 10.0;
+      Period          : constant Duration := 2.0;
       Next            : Time               := Clock + 1.0;
 
 
@@ -72,7 +72,7 @@ procedure Send_Test_Influx_Direct is
                Count := Count + 1;
 
                String'Write (Channel, "POST /write?db=openhab_db HTTP/1.1" & CRLF &
-                                        "Host: z3-2:8086" & CRLF &
+                               "Host: z3-3:8086" & CRLF &
                                         "Accept: */*" & CRLF &
                                         -- "User-Agent: test_prg/V0.0" & CRLF &
                                         "Content-Type: application/x-www-form-urlencoded" & CRLF &
@@ -81,7 +81,7 @@ procedure Send_Test_Influx_Direct is
                                         "test_data value=5.56" & Count'Img(2..2));
 
 
-               Put_Line ("sent, waiting for response");
+               --  Put_Line ("sent, waiting for response");
 
                --  loop
                --     Ada.Streams.Read (Channel.all, Data, Offset);

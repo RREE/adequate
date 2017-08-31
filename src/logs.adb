@@ -1,10 +1,15 @@
 with Alog;                         use Alog;
 with Alog.Facilities;
+with Alog.Facilities.Syslog;
 
 package body Logs is
---   Nr_Fac : constant Natural := L.Facility_Count;
---   F : constant Facilities.Class := Dfdf;
+   use Alog.Facilities.Syslog;
+
+   Sys : constant Facilities.Syslog.Handle :=
+     new Facilities.Syslog.Instance;
 begin
-   --   F.Toggle_Write_Loglevel (State => True);
-   null;
+   Sys.Set_Origin (LOG_DAEMON);
+   Sys.Toggle_Write_Timestamp (False);
+   L.Attach_Facility (Facilities.Handle (Sys));
+   -- L.Attach_Default_Facility;
 end Logs;

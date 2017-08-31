@@ -59,12 +59,16 @@ begin
       L.Log_Message (Debug, "MQTT client '" & Client_Name.all &
                        "' connected to '" & Server_Name.all & "'");
       Send_Connect (Client, Client_Name.all);
+      L.Log_Message (Debug, "MQTT client '" & Client_Name.all &
+                       "' sent connected to broker");
 
       Send_Subscribe (Client,
                       Sub_Nr,
                       Opt_Cli_Client.Topic_Text.all,
                       QoS);
 
+      L.Log_Message (Debug, "MQTT client '" & Client_Name.all &
+                       "' subscribed to topic'" & Opt_Cli_Client.Topic_Text.all & "'");
       loop null; end loop;
    end;
 

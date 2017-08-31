@@ -76,7 +76,7 @@ procedure Send_Test_Influx is
                Next := Next + Period;
                Put_Line ("cyclic_sender active");
 
-               Connect (Client, "z3-2", 8086);
+               Connect (Client, "z3-3", 8086);
                Put_Line ("cyclic_sender HTTP client connected" );
 
                Set_Request_Header (Client, Accept_Header, "*/*");
@@ -95,46 +95,6 @@ procedure Send_Test_Influx is
                Put_Line (Get (Message));
                Put_Line ("<<<<<<<<<<<<<<<<<<<< Message");
 
-
-               --  Build_Message:
-               --  declare
-               --     use Ada.Calendar.Formatting;
-               --     M1 : constant Minute_Number := Minute (Clock);
-               --     M2 : constant Minute_Number := Minute (Clock+60.0);
-               --     M3 : constant Minute_Number := Minute (Clock+120.0);
-
-               --     T1 : constant String := Image (M1);
-               --     T2 : constant String := Image (M2);
-               --     T3 : constant String := Image (M3);
-               --     Msg1 : constant String := "updatev " & " -t ";
-               --     Msg2 : constant String := Msg1 & "T_Vorlauf:T_Heizkoerper:T_Ruecklauf N:";
-               --     Msg3 : constant String := Msg2 & T1 & ':' & T2 & ':' & T3 & ASCII.LF;
-
-               --  begin
-               --     -- String'Write (Channel, Msg3);
-               --     L.Log_Message (Info, "sent '" & Msg3 & "' to " & Image(Address));
-               --     -- delay 0.05;
-
-               --     Char_Response:
-               --     declare
-               --        Data     : Stream_Element_Array (1 .. 1); -- 5350);
-               --        Data_Len : Stream_Element_Count;
-               --        C_Old    : Character := ' ';
-               --        C        : Character;
-               --     begin
-               --        loop
-               --           Ada.Streams.Read (Channel.all, Data, Data_Len);
-               --           exit when Data_Len = 0;
-               --           C := Character'Val (Data (1));
-               --           exit when C_Old = 'O' and C = 'K';
-               --           C_Old := C;
-               --           Ada.Text_IO.Put (C);
-               --        end loop;
-               --     end Char_Response;
-
-               --  end Build_Message;
-
-               -- Close_Socket (Cyc_Snd);
 
             exception
             when E : others =>
