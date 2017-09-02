@@ -33,8 +33,9 @@ package body Alog.Facilities.File_Descriptor is
    is
       use Ada.Text_IO;
    begin
-      if Facility.Log_File_Ptr /= Standard_Output
-        and Is_Open (File => Facility.Log_File)
+      if Facility.Log_File_Ptr /= Standard_Output and then
+        Facility.Log_File_Ptr /= Standard_Error and then
+        Is_Open (File => Facility.Log_File)
       then
          if Remove then
             --  Close and delete.
@@ -97,6 +98,26 @@ package body Alog.Facilities.File_Descriptor is
 
    -------------------------------------------------------------------------
 
+   procedure Set_Logfile_Standard_Error
+     (Facility : in out Instance)
+   is
+   begin
+      Facility.Log_File_Name := To_Bounded_String ("Standard_Error");
+      Facility.Log_File_Ptr := Ada.Text_IO.Standard_Error;
+   end Set_Logfile_Standard_Error;
+
+   -------------------------------------------------------------------------
+
+   procedure Set_Logfile_Standard_Output
+     (Facility : in out Instance)
+   is
+   begin
+      Facility.Log_File_Name := To_Bounded_String ("Standard_Output");
+      Facility.Log_File_Ptr := Ada.Text_IO.Standard_Output;
+   end Set_Logfile_Standard_Output;
+
+   -------------------------------------------------------------------------
+
    procedure Teardown (Facility : in out Instance) is
    begin
       Facility.Close_Logfile;
@@ -113,14 +134,17 @@ package body Alog.Facilities.File_Descriptor is
 
       use type Ada.Text_IO.File_Access;
    begin
-      if Facility.Log_File_Ptr = Ada.Text_IO.Standard_Output then
-         Ada.Text_IO.Put_Line (Item => Msg);
-         Ada.Text_IO.Flush;
-      else
+      --  if Facility.Log_File_Ptr = Ada.Text_IO.Standard_Output then
+      --     Ada.Text_IO.Put_Line (Item => Msg);
+      --     Ada.Text_IO.Flush;
+      --  elsif Facility.Log_File_Ptr = Ada.Text_IO.Standard_Error then
+      --     Ada.Text_IO.Put_Line (Standard_Error, Item => Msg);
+      --     Ada.Text_IO.Flush (Standard_Error);
+      --  else
          Ada.Text_IO.Put_Line (File => Facility.Log_File_Ptr.all,
                                Item => Msg);
          Ada.Text_IO.Flush (File => Facility.Log_File_Ptr.all);
-      end if;
+      --  end if;
    end Write;
 
 end Alog.Facilities.File_Descriptor;

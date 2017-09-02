@@ -1,6 +1,6 @@
 --  options for mqtt2influx
 
-with Ada.Command_Line;             use Ada.Command_Line;
+-- with Ada.Command_Line;             use Ada.Command_Line;
 with GNAT.Command_Line;            use GNAT.Command_Line;
 -- with GNAT.Exception_Traces;
 with Ada.Text_IO;                  use Ada.Text_IO;
@@ -100,7 +100,7 @@ package body Opt_M2I is
             Target_UID : User_ID;
          begin
             if User = null or else User.all = "" then
-               Put_Line (Standard_Error, "you must provide a user when in daemon mode.");
+               Put_Line (Standard_Error, "you must provide a user on the command line when in daemon mode.");
                raise Stop_Failure;
             end if;
 
@@ -131,8 +131,8 @@ Ada.Text_IO.Put_Line(
                        "config   : " & Config_File.all & ASCII.LF &
                        "verbosity: " & Verbosity_Level'Img & ASCII.LF);
    exception
-   when Error : GNAT.Command_Line.Exit_From_Command_Line => null;
-   when Error : GNAT.Command_Line.Invalid_Switch =>
+   when GNAT.Command_Line.Exit_From_Command_Line => null;
+   when GNAT.Command_Line.Invalid_Switch =>
       L.Log_Message (Alog.Error, "invalid switch");
       Ada.Text_IO.Put_Line (Standard_Error, "invalid switch");
       Display_Help (Cfg);

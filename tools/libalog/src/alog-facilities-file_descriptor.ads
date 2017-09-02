@@ -42,6 +42,14 @@ package Alog.Facilities.File_Descriptor is
    --  Set logfile to use. If not set, standard output is used for logging.
    --  Set Append to False if an existing logfile should be overwritten.
 
+   procedure Set_Logfile_Standard_Output
+     (Facility : in out Instance);
+   --  set the logfile to use Standard_Output.
+
+   procedure Set_Logfile_Standard_Error
+     (Facility : in out Instance);
+   --  set the logfile to use Standard_Error.
+
    function Get_Logfile (Facility : Instance) return Ada.Text_IO.File_Access;
    --  Get currently used logfile.
 
@@ -50,7 +58,7 @@ package Alog.Facilities.File_Descriptor is
       Remove   :        Boolean := False);
    --  Close opened logfile.
 
-   Open_File_Error : exception;
+   Open_File_Error : exception renames Ada.Text_IO.Name_Error;
    --  This exception is raised if an error occurs while trying to open a
    --  logfile.
 

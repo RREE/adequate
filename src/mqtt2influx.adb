@@ -1,3 +1,4 @@
+with Ada.Text_IO;
 with Ada.Exceptions;               use Ada.Exceptions;
 with Ada.Command_Line;             use Ada.Command_Line;
 with Ada.Strings.Maps.Constants;
@@ -9,6 +10,7 @@ with POSIX.Unsafe_Process_Primitives;
 
 with Alog;                         use Alog;
 with Alog.Policy_DB;
+with Alog.Logger;
 with Logs;                         use Logs;
 
 with GNAT.Sockets.MQTT;            use GNAT.Sockets.MQTT;
@@ -98,13 +100,13 @@ procedure MQTT2Influx is
    end Level_From_Esc_Seq;
 
 
-   procedure Disp_Levels (Topic : String) is
-   begin
-      for I in 1 .. Level_Count loop
-         L.Log_Message (Debug, "topic : " &Topic&", level ="&I'Img& ", level = " &
-                          Topic(Levels(I).Start_Ptr .. Levels(I).End_Ptr));
-      end loop;
-   end Disp_Levels;
+   --  procedure Disp_Levels (Topic : String) is
+   --  begin
+   --     for I in 1 .. Level_Count loop
+   --        L.Log_Message (Debug, "topic : " &Topic&", level ="&I'Img& ", level = " &
+   --                         Topic(Levels(I).Start_Ptr .. Levels(I).End_Ptr));
+   --     end loop;
+   --  end Disp_Levels;
 
 begin
    L.Log_Message (Debug, "MQTT2Influx started (version " & My_Version & "')");
@@ -113,7 +115,14 @@ begin
                        Case_Sensitive   => False,
                        On_Type_Mismatch => Config.Print_Warning);
 
+   Logger.Clear (Logs.L);
+
    if Opt_M2I.Daemon then
+      Logs.Set_Log_Dest_To ("syslog");
+
+      Ada.Text_IO.Put_Line ("vor erstem fork");
+      delay 2.0;
+
       Fork_Daemon:
       declare
          use POSIX.Unsafe_Process_Primitives;
@@ -122,11 +131,20 @@ begin
          if Fork /= Null_Process_ID then
             raise Opt_M2I.Stop_Success;
          end if;
+         Ada.Text_IO.Put_Line ("nach erstem fork");
 
-         if Fork /= Null_Process_ID then
-            raise Opt_M2I.Stop_Success;
-         end if;
+         --  delay 2.0;
+         --  if Fork /= Null_Process_ID then
+         --     raise Opt_M2I.Stop_Success;
+         --  end if;
+         --  Ada.Text_IO.Put_Line ("nach zweitem fork");
       end Fork_Daemon;
+   else
+      declare
+         Logdev : constant String := Config.Value_Of (Cfg, "mqtt2influx", "logdevice", "stderr");
+      begin
+         Logs.Set_Log_Dest_To (Logdev);
+      end;
    end if;
 
 

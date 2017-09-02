@@ -31,7 +31,7 @@ with Ada.Exceptions;
 -- with Ada.Calendar; -- Real_Time;
 -- with Ada.Calendar.Formatting;
 -- with Ada.Text_IO;
-with Ada.Strings.Fixed;
+-- with Ada.Strings.Fixed;
 -- with Ada.Strings.Maps;
 
 with Alog;                         use Alog;
