@@ -19,4 +19,8 @@ package Opt_M2I is
    Verbosity_Level : aliased Integer;
    --
    procedure Set_Options;
+
+   Stop_Success : exception;
+   Stop_Failure : exception;
+
 end Opt_M2I;

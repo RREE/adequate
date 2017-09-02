@@ -1,9 +1,11 @@
 with Ada.Exceptions;               use Ada.Exceptions;
+with Ada.Command_Line;             use Ada.Command_Line;
 with Ada.Strings.Maps.Constants;
 with Ada.Strings.Fixed;
 with Ada.Characters.Handling;
-with POSIX.User_Database;
+-- with POSIX.User_Database;
 with POSIX.Process_Identification;
+with POSIX.Unsafe_Process_Primitives;
 
 with Alog;                         use Alog;
 with Alog.Policy_DB;
@@ -25,6 +27,7 @@ procedure MQTT2Influx is
    Cfg : Config.Configuration;
 
    My_Version  : constant String  := "V0.1";
+
 
    Factory   : aliased Connections_Factory;
    Broker    : aliased Connections_Server (Factory'Access, 0);
@@ -110,6 +113,23 @@ begin
                        Case_Sensitive   => False,
                        On_Type_Mismatch => Config.Print_Warning);
 
+   if Opt_M2I.Daemon then
+      Fork_Daemon:
+      declare
+         use POSIX.Unsafe_Process_Primitives;
+         use POSIX.Process_Identification;
+      begin
+         if Fork /= Null_Process_ID then
+            raise Opt_M2I.Stop_Success;
+         end if;
+
+         if Fork /= Null_Process_ID then
+            raise Opt_M2I.Stop_Success;
+         end if;
+      end Fork_Daemon;
+   end if;
+
+
    zzz:
    declare
       My_Name     : constant String  := Config.Value_Of (Cfg, "broker", "client_id", "mqtt2influx");
@@ -138,7 +158,7 @@ begin
 
       use Config;
       use Config.String_Vector;
-      Patterns : Section_List := Read_Sections (Cfg);
+      Patterns : Section_List;
 
       procedure Remove_Section (Name : String)
       is
@@ -155,8 +175,9 @@ begin
    begin
 
       --  read configured patterns
+      Patterns := Read_Sections (Cfg);
       Remove_Section ("broker");
-      Remove_Section ("logs");
+      Remove_Section ("mqtt2influx");
       Remove_Section ("influx");
       Remove_Section ("defaults");
       L.Log_Message (Debug, "Influx server          = " & Influxserver_Default);
@@ -275,8 +296,14 @@ begin
       delay 0.01;
    end loop;
 
+
 exception
+
+when Opt_M2I.Stop_Success =>
+   Set_Exit_Status (Success);
+
 when E : others =>
+   Set_Exit_Status (Failure);
    L.Log_Message (Error, "Error (main): " & Exception_Information (E));
 
 end MQTT2Influx;

@@ -16,7 +16,6 @@ with POSIX.Process_Identification;
 package body Opt_M2I is
 
    Cfg : Command_Line_Configuration;
-   Stop : exception;
 
    procedure Set_Options
    is
@@ -57,7 +56,7 @@ package body Opt_M2I is
       case Verbosity_Level is
       when Integer'First .. -1 | 4 .. Integer'Last =>
          Display_Help (Cfg);
-         raise Stop with "verbosity out of range";
+         raise Stop_Failure with "verbosity out of range";
       when 0 => Set_Default_Loglevel (Level => Error);
       when 1 => Set_Default_Loglevel (Level => Notice);
       when 2 => Set_Default_Loglevel (Level => Info);
@@ -77,35 +76,53 @@ package body Opt_M2I is
          use Ada.Text_IO;
       begin
          if not Exists (Config_File.all) then
-            Put_Line (Standard_Error, "the file '" & Config_File.all & "' does not exist!");
-            raise Stop;
+            Put_Line (Standard_Error, "the config file '" & Config_File.all & "' does not exist!");
+            raise Stop_Failure;
          end if;
       end Check_Config_File;
 
-      if Daemon and then (User = null or else User.all = "") then
+      --
+      -- if in daemon mode the following conditions must be true:
+      --
+      --   1. the username from the command-line must exist
+      --
+      --   2. if no username is given on the command-line, the username
+      --      from the config-file must exist.
+      --
+      --   3. the current user must be root (id:0) or the target user
+      if Daemon then
          declare
             use Ada.Text_IO;
+            use POSIX;
+            use POSIX.User_Database;
+            use POSIX.Process_Identification;
+            My_UID     : User_ID;
+            Target_UID : User_ID;
          begin
-            Put_Line (Standard_Error, "you must provide a user when in daemon mode.");
+            if User = null or else User.all = "" then
+               Put_Line (Standard_Error, "you must provide a user when in daemon mode.");
+               raise Stop_Failure;
+            end if;
+
+            My_UID := Get_Effective_User_ID;
+            Target_UID := User_ID_Of (Get_User_Database_Item (To_POSIX_String(User.all)));
+
+            if My_UID = Value ("0") or else My_UID = Target_UID then
+               null; -- go on
+            else
+               Put_Line (Standard_Error, "you must be root to run in daemon mode.");
+               raise Stop_Failure;
+            end if;
+
+            Set_User_ID (Target_UID);
+
+         exception
+         when POSIX.POSIX_Error =>
+            Put_Line (Standard_Error, "user " & User.all & " not available.");
+            raise Stop_Failure;
          end;
-         raise Stop;
       end if;
 
-      --  Check_User:
-      --  declare
-      --     use Ada.Text_IO;
-      --     use POSIX;
-      --     use POSIX.User_Database;
-      --     use POSIX.Process_Identification;
-      --     Item : constant User_Database_Item := Get_User_Database_Item (To_POSIX_String(User.all));
-      --     UID : constant User_ID := User_ID_Of (Item);
-      --  begin
-      --     null;
-      --  exception
-      --  when POSIX_Error =>
-      --     Put_Line (Standard_Error, "user '" & User.all & "' does not exist.");
-      --     raise Stop;
-      --  end Check_User;
 --      L.Log_Message (Debug,
 Ada.Text_IO.Put_Line(
                      "options set to" & ASCII.LF &
@@ -119,8 +136,7 @@ Ada.Text_IO.Put_Line(
       L.Log_Message (Alog.Error, "invalid switch");
       Ada.Text_IO.Put_Line (Standard_Error, "invalid switch");
       Display_Help (Cfg);
-      Set_Exit_Status (Failure);
-      raise Stop;
+      raise Stop_Failure;
    end Set_Options;
 
 end Opt_M2I;
