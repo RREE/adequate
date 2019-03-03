@@ -267,6 +267,16 @@ begin
             L.Log_Message (Debug, "location("&P&")="&Influx.Location(P));
 
          end Show_Location;
+         Transform:
+         declare
+            use Ada.Strings.Fixed;
+            use Ada.Strings.Maps.Constants;
+
+            Trans : constant String := Config.Value_Of (Cfg, P, "message_transformation", "");
+         begin
+            Influx.Transformation.Insert (P, Trans);
+            L.Log_Message (Debug, "transformation("&P&")="""&Influx.Transformation(P)&"""");
+         end Transform;
       end loop;
 
 

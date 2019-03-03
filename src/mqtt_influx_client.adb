@@ -31,7 +31,7 @@ with Ada.Exceptions;
 -- with Ada.Calendar; -- Real_Time;
 -- with Ada.Calendar.Formatting;
 -- with Ada.Text_IO;
--- with Ada.Strings.Fixed;
+with Ada.Strings.Fixed;
 -- with Ada.Strings.Maps;
 
 with Alog;                         use Alog;
@@ -66,6 +66,36 @@ package body MQTT_Influx_Client is
    begin
       L.Log_Message (Warning, "Connect rejected " & Image (Response));
    end On_Connect_Rejected;
+
+
+   function Message_Transformation (Original : Stream_Element_Array;
+                                    Command  : String := "")
+                                   return String
+   is
+      use Ada.Strings.Fixed;
+      Msg_Str : String (1 .. Original'Length);
+      for Msg_Str'Address use Original'Address;
+   begin
+      if Command = "" then
+         return Msg_Str;
+      elsif Command = "%1" then
+         declare
+            use Ada.Strings;
+            Trimmed_Msg : constant String := Trim (Msg_Str, Both);
+            End_Word : Natural := Index (Trimmed_Msg, Pattern => " ");
+         begin
+            if End_Word = 0 then
+               End_Word := Trimmed_Msg'Last;
+            else
+               End_Word := End_Word - 1;
+            end if;
+
+            return Trimmed_Msg(1..End_Word);
+         end;
+      else
+         return "";
+      end if;
+      end Message_Transformation;
 
 
    procedure On_Publish (Pier      : in out MQTT_Client;
@@ -113,8 +143,9 @@ package body MQTT_Influx_Client is
       declare
          use Strings_Edit;
          Port : constant Natural := Natural(Port_Type'(Influxport(Topic)));
-         Msg_Str : String (1 .. Message'Length);
-         for Msg_Str'Address use Message'Address;
+         -- Msg_Str : String (1 .. Message'Length);
+         -- for Msg_Str'Address use Message'Address;
+         Msg_Str : constant String := Message_Transformation (Message, Transformation(Topic));
       begin
          L.Log_Message (Info, "Message = '"&Msg_Str&''');
 
@@ -164,7 +195,7 @@ package body MQTT_Influx_Client is
          L.Log_Message (Info, "sent '"&Output(1..Out_Ptr)&''');
       end Gen_Output;
       Close_Socket (To_Influx);
-      L.Log_Message (Info, "closed Influx socket" );
+      L.Log_Message (Info, "closed Influx socket");
 
 
    exception

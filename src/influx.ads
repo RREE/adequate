@@ -7,14 +7,15 @@ package Influx is
    package Str_Nat_Map_Pkg  is new Ada.Containers.Indefinite_Ordered_Maps (String, Natural);
    package Str_Bool_Map_Pkg is new Ada.Containers.Indefinite_Ordered_Maps (String, Boolean);
 
-   Influxserv    : Str_Str_Map_Pkg.Map;
-   Influxport    : Str_Port_Map_Pkg.Map;
-   Influxdb      : Str_Str_Map_Pkg.Map;
-   Influxname    : Str_Str_Map_Pkg.Map;
-   Show_Topic    : Str_Bool_Map_Pkg.Map;
-   Show_Device   : Str_Bool_Map_Pkg.Map;
-   Show_Location : Str_Bool_Map_Pkg.Map;
-   Device        : Str_Str_Map_Pkg.Map;
-   Location      : Str_Str_Map_Pkg.Map;
+   Influxserv     : Str_Str_Map_Pkg.Map;
+   Influxport     : Str_Port_Map_Pkg.Map;
+   Influxdb       : Str_Str_Map_Pkg.Map;
+   Influxname     : Str_Str_Map_Pkg.Map;
+   Show_Topic     : Str_Bool_Map_Pkg.Map;
+   Show_Device    : Str_Bool_Map_Pkg.Map;
+   Show_Location  : Str_Bool_Map_Pkg.Map;
+   Device         : Str_Str_Map_Pkg.Map;
+   Location       : Str_Str_Map_Pkg.Map;
+   Transformation : Str_Str_Map_Pkg.Map;
 
 end Influx;
