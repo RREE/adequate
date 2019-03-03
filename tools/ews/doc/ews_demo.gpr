@@ -1,0 +1,27 @@
+with "../ews";
+with "xmlada_dom";
+project EWS_Demo is
+
+   for Main use ("ews_demo.adb");
+   for Exec_Dir use ".";
+   for Source_Dirs use (".");
+   for Object_Dir use ".build";
+
+   package Builder is
+      for Default_Switches ("ada") use ("-g");
+   end Builder;
+
+   package Compiler is
+      for Default_Switches ("ada") use
+        (
+         "-gnat12",
+         "-O2",
+         "-gnatqQafoy"
+        );
+   end Compiler;
+
+   package Binder is
+      for Default_Switches ("ada") use ("-E");
+   end Binder;
+
+end EWS_Demo;
